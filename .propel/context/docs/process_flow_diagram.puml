@@ -1,0 +1,72 @@
+@startuml
+!define RECTANGLE(x) rectangle "x" as x
+
+' Actors
+actor Patient
+actor Staff
+actor Admin
+actor System
+
+' Patient Appointment Booking Options
+Patient --> (AI Conversational Booking)
+Patient --> (Manual Form Booking)
+Patient --> (Assisted Booking at Hospital)
+
+' Booking Flows
+(AI Conversational Booking) --> (Book Appointment)
+(Manual Form Booking) --> (Book Appointment)
+(Assisted Booking at Hospital) --> Staff
+Staff --> (Book Appointment)
+
+' Document Upload
+Patient --> (Upload Documents)
+(Upload Documents) --> (Aggregate Clinical Data)
+
+' Insurance Precheck
+(Book Appointment) --> (Insurance Precheck)
+(Insurance Precheck) --> (Confirm Booking)
+
+' Slot Management
+(Book Appointment) --> (Slot Allocation)
+(Slot Allocation) --> (Slot Swap)
+(Slot Swap) --> (Create New Slot)
+(Create New Slot) --> (Slot Allocation)
+
+' PDF Confirmation
+(Confirm Booking) --> (Generate PDF Confirmation)
+(Generate PDF Confirmation) --> Patient
+(Generate PDF Confirmation) --> (Send Email Notification)
+
+' Notifications
+(Confirm Booking) --> (Send Notification)
+(Send Notification) --> Patient
+(Send Notification) --> Staff
+
+' Queue & Walk-in Management
+Staff --> (Queue Management)
+Staff --> (Walk-in Management)
+(Queue Management) --> (Mark Arrival)
+(Walk-in Management) --> (Mark Arrival)
+(Mark Arrival) --> (Update Queue)
+
+' No Show & Cancellation
+Staff --> (Mark No Show)
+(Mark No Show) --> (Update Queue)
+Patient --> (Cancel Appointment)
+(Cancel Appointment) --> (Slot Allocation)
+
+' Only Staff can mark arrival/no show
+' (already shown above)
+
+' Admin User Management
+Admin --> (User Management)
+(User Management) --> (Create User)
+(User Management) --> (Update User)
+(User Management) --> (Deactivate User)
+(User Management) --> (Assign Roles)
+
+' Medical Coding & Conflict
+(Aggregate Clinical Data) --> (Medical Coding: ICD-10/CPT)
+(Aggregate Clinical Data) --> (Highlight Medication Conflict)
+
+@enduml

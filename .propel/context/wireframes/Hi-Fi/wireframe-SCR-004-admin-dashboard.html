@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440">
+<title>SCR-004 · Admin Dashboard</title>
+<link rel="stylesheet" href="design-system.css">
+</head>
+<body>
+<!-- Navigation Map
+| Element | Action | Target Screen |
+|---------|--------|---------------|
+| #create-user-btn | click | SCR-020 (Create User) |
+| .edit-user-link | click | SCR-021 (Update User) |
+| #audit-log-nav | click | SCR-024 (Audit Log) |
+| #assign-roles-nav | click | SCR-023 (Assign Roles) |
+-->
+<div class="shell">
+  <!-- Sidebar -->
+  <aside class="sidebar" role="navigation" aria-label="Admin navigation">
+    <div class="sidebar-header">
+      <div class="sidebar-logo" aria-hidden="true">UP</div>
+      <span class="sidebar-title">Unified Patient Access</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a href="wireframe-SCR-004-admin-dashboard.html" class="nav-item active" aria-current="page"><span class="icon">🏠</span> Dashboard</a>
+      <div class="nav-section-label">User Management</div>
+      <a href="wireframe-SCR-020-create-user.html" class="nav-item"><span class="icon">➕</span> Create User</a>
+      <a href="wireframe-SCR-021-update-user.html" class="nav-item"><span class="icon">👤</span> Manage Users</a>
+      <a href="wireframe-SCR-023-assign-roles.html" id="assign-roles-nav" class="nav-item"><span class="icon">🔑</span> Assign Roles</a>
+      <div class="nav-section-label">Compliance</div>
+      <a href="wireframe-SCR-024-audit-log.html" id="audit-log-nav" class="nav-item"><span class="icon">📜</span> Audit Log</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div style="display:flex;align-items:center;gap:var(--space-sm)">
+        <div class="avatar avatar-sm">A</div>
+        <div><div style="font-size:var(--fs-small);font-weight:var(--fw-medium)">Admin User</div><div class="text-caption">admin@hospital.org</div></div>
+      </div>
+      <div class="hipaa-badge" style="margin-top:var(--space-sm)">🔒 HIPAA Compliant</div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <nav class="breadcrumb" aria-label="Breadcrumb"><a href="#">Admin</a><span class="sep">/</span><span aria-current="page">Dashboard</span></nav>
+      </div>
+      <div class="topbar-right">
+        <input class="search-input" type="search" placeholder="Search users…" aria-label="Search users">
+        <button class="btn btn-ghost" aria-label="Notifications">🔔</button>
+        <div class="avatar avatar-sm">A</div>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="page-header">
+        <div class="page-header-text">
+          <h1>Admin Dashboard</h1>
+          <p class="text-secondary" style="margin-bottom:0">User management overview and audit activity</p>
+        </div>
+        <a href="wireframe-SCR-020-create-user.html" id="create-user-btn" class="btn btn-primary">➕ Create User</a>
+      </div>
+
+      <!-- Stat Cards -->
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-label">Total Users</div>
+          <div class="stat-value">247</div>
+          <div class="stat-change positive">↑ 12 this month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active Staff</div>
+          <div class="stat-value">38</div>
+          <div class="stat-change positive">↑ 3 new</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active Patients</div>
+          <div class="stat-value">204</div>
+          <div class="stat-change positive">↑ 9 this week</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Audit Events (24h)</div>
+          <div class="stat-value">1,432</div>
+          <div class="stat-change negative">↑ 18% vs avg</div>
+        </div>
+      </div>
+
+      <!-- Users Table -->
+      <div class="card">
+        <div class="card-header">
+          <h2 style="font-size:var(--fs-body);margin:0">Recent Users</h2>
+          <div class="filter-bar" style="margin-bottom:0">
+            <select class="form-select" style="width:auto;min-height:36px;padding:4px 12px;font-size:var(--fs-small)" aria-label="Filter by role">
+              <option>All Roles</option>
+              <option>Admin</option>
+              <option>Staff</option>
+              <option>Patient</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table aria-label="Users table">
+            <thead>
+              <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Last Active</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><div style="display:flex;align-items:center;gap:var(--space-sm)"><div class="avatar avatar-sm">JD</div> John Doe</div></td>
+                <td>john.doe@hospital.org</td>
+                <td><span class="badge badge-info">Staff</span></td>
+                <td><span class="badge badge-success">Active</span></td>
+                <td>2 hours ago</td>
+                <td class="table-actions"><a href="wireframe-SCR-021-update-user.html" class="btn btn-ghost edit-user-link" style="min-height:36px;padding:4px 8px;font-size:var(--fs-caption)">Edit</a></td>
+              </tr>
+              <tr>
+                <td><div style="display:flex;align-items:center;gap:var(--space-sm)"><div class="avatar avatar-sm">JS</div> Jane Smith</div></td>
+                <td>jane.smith@email.com</td>
+                <td><span class="badge badge-neutral">Patient</span></td>
+                <td><span class="badge badge-success">Active</span></td>
+                <td>1 day ago</td>
+                <td class="table-actions"><a href="wireframe-SCR-021-update-user.html" class="btn btn-ghost edit-user-link" style="min-height:36px;padding:4px 8px;font-size:var(--fs-caption)">Edit</a></td>
+              </tr>
+              <tr>
+                <td><div style="display:flex;align-items:center;gap:var(--space-sm)"><div class="avatar avatar-sm">MJ</div> Mary Johnson</div></td>
+                <td>mary.j@hospital.org</td>
+                <td><span class="badge badge-info">Staff</span></td>
+                <td><span class="badge badge-warning">Inactive</span></td>
+                <td>14 days ago</td>
+                <td class="table-actions"><a href="wireframe-SCR-021-update-user.html" class="btn btn-ghost edit-user-link" style="min-height:36px;padding:4px 8px;font-size:var(--fs-caption)">Edit</a></td>
+              </tr>
+              <tr>
+                <td><div style="display:flex;align-items:center;gap:var(--space-sm)"><div class="avatar avatar-sm">RB</div> Robert Brown</div></td>
+                <td>r.brown@hospital.org</td>
+                <td><span class="badge badge-error">Admin</span></td>
+                <td><span class="badge badge-success">Active</span></td>
+                <td>Just now</td>
+                <td class="table-actions"><a href="wireframe-SCR-021-update-user.html" class="btn btn-ghost edit-user-link" style="min-height:36px;padding:4px 8px;font-size:var(--fs-caption)">Edit</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Recent Audit Activity -->
+      <div class="card" style="margin-top:var(--space-lg)">
+        <div class="card-header">
+          <h2 style="font-size:var(--fs-body);margin:0">Recent Audit Activity</h2>
+          <a href="wireframe-SCR-024-audit-log.html" class="btn btn-ghost" style="font-size:var(--fs-small)">View All →</a>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div style="padding:var(--space-sm) var(--space-lg);border-bottom:1px solid var(--color-border);font-size:var(--fs-small)">
+            <strong>User Created</strong> — admin@hospital.org created patient account for jane.smith@email.com <span class="text-muted">· 2 hours ago</span>
+          </div>
+          <div style="padding:var(--space-sm) var(--space-lg);border-bottom:1px solid var(--color-border);font-size:var(--fs-small)">
+            <strong>Role Assigned</strong> — admin@hospital.org assigned "Staff" role to john.doe@hospital.org <span class="text-muted">· 5 hours ago</span>
+          </div>
+          <div style="padding:var(--space-sm) var(--space-lg);font-size:var(--fs-small)">
+            <strong>User Deactivated</strong> — admin@hospital.org deactivated mary.j@hospital.org <span class="text-muted">· 1 day ago</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
