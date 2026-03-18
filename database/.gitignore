@@ -1,0 +1,33 @@
+# Security files
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Backup files
+backups/
+*.backup
+*.sql.gz
+*.dump
+
+# Local environment files
+.env
+.env.local
+
+# PostgreSQL data directory
+data/
+pgdata/
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db

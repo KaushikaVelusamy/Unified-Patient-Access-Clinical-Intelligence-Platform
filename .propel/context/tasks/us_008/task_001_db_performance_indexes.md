@@ -1,13 +1,12 @@
 # Task - TASK_001_DB_PERFORMANCE_INDEXES
 
 ## Requirement Reference
-- User Story: US_008
+- User Story: US_008  
 - Story Location: `.propel/context/tasks/us_008/us_008.md`
 - Acceptance Criteria:
-    - AC1: Indexes created on timeslots(staff_id, date), appointments(patient_id, status, appointment_date), users(email), audit_logs(user_id, created_at)
-    - Query performance targets: <100ms for slot availability, <200ms for patient lookup
+    - AC1: Indexes created on timeslots(staff_id, date), appointments(patient_id, status, appointment_date), users(email), audit_logs(user_id, created_at), query performance improves to target latencies (<100ms slot availability, <200ms patient lookup)
 - Edge Cases:
-    - Creating index on large existing table: Use CREATE INDEX CONCURRENTLY to avoid table locking
+    - Creating index on large existing table: Use CREATE INDEX CONCURRENTLY to avoid table locking in production
     - Unused indexes: Monitor pg_stat_user_indexes, remove indexes with low idx_scan counts
 
 ## Design References (Frontend Tasks Only)
@@ -22,29 +21,31 @@
 | **UXR Requirements** | N/A |
 | **Design Tokens** | N/A |
 
-> **Note**: Database performance optimization - no UI impact
+> **Note**: Database performance optimization - no UI
 
 ## Applicable Technology Stack
 | Layer | Technology | Version |
-|-------|------------|---------|  
+|-------|------------|---------|
 | Frontend | N/A | N/A |
-| Backend | N/A (database only) | N/A |
-| Database | PostgreSQL | 16.x |
+| Backend | Node.js | 20.x LTS |
+| Backend | node-pg-migrate | 6.x |
+| Database | PostgreSQL | 15+ |
+| Database | pgvector | 0.5.0+ |
 | AI/ML | N/A | N/A |
 
-**Note**: All indexes MUST be compatible with PostgreSQL 16.x query planner
+**Note**: All code and libraries MUST be compatible with versions above.
 
 ## AI References (AI Tasks Only)
 | Reference Type | Value |
 |----------------|-------|
-| **AI Impact** | No |
+| **AI Impact** | Partial (IVFFlat index on embeddings) |
 | **AIR Requirements** | N/A |
-| **AI Pattern** | N/A |
+| **AI Pattern** | Vector similarity search optimization |
 | **Prompt Template Path** | N/A |
 | **Guardrails Config** | N/A |
 | **Model Provider** | N/A |
 
-> **Note**: No AI features - database indexing only
+> **Note**: Includes vector index for AI features
 
 ## Mobile References (Mobile Tasks Only)
 | Reference Type | Value |
@@ -54,159 +55,358 @@
 | **Min OS Version** | N/A |
 | **Mobile Framework** | N/A |
 
-> **Note**: Backend database optimization
+> **Note**: Backend database only
 
 ## Task Overview
-Create optimized B-tree and composite indexes on high-traffic columns: (1) time_slots: composite index (provider_id, appointment_date, is_available) for slot availability queries, (2) appointments: composite index (patient_id, appointment_date, status) for patient dashboard, single index (status) for queue filtering, (3) users: unique index (email) for login, (4) audit_logs: composite index (user_id, created_at DESC) for audit trail queries, (5) clinical_documents: HNSW vector index (embedding) for similarity search, (6) waitlist: composite index (slot_id, status, priority DESC) for waitlist processing. Use CONCURRENTLY for production safety. Validate query plans with EXPLAIN ANALYZE.
+Create comprehensive performance indexes on frequently queried columns to achieve sub-100ms slot availability queries and sub-200ms patient lookups. Implement B-tree indexes on foreign keys and status columns, composite indexes for common query patterns, unique indexes for constraints, and IVFFlat indexes for vector similarity search. Use CREATE INDEX CONCURRENTLY for production safety. Monitor index usage with pg_stat_user_indexes and implement automated unused index detection.
 
-## Dependent Tasks  
-- US_003 Task 001: Database schema must exist (tables created)
+## Dependent Tasks
+- US_007 TASK_001: Core database schema must be implemented
 
 ## Impacted Components
 **New:**
-- server/db/indexes-performance.sql (Performance optimization indexes)
-- server/db/analyze-queries.sql (EXPLAIN ANALYZE queries for validation)
-- server/db/index-monitoring.sql (Queries to monitor index usage via pg_stat_user_indexes)
+- database/migrations/012_create_performance_indexes.js (B-tree indexes on FKs and status)
+- database/migrations/013_create_composite_indexes.js (Multi-column indexes for query patterns)
+- database/migrations/014_create_vector_indexes.js (IVFFlat for embeddings)
+- database/scripts/analyze_index_usage.sql (Query to identify unused indexes)
+- database/scripts/benchmark_queries.sql (Performance testing queries)
+- database/docs/INDEX_STRATEGY.md (Index design rationale and maintenance)
+- database/docs/QUERY_OPTIMIZATION.md (Query performance guide)
+
+**Modified:**
+- database/migrations/010_create_indexes.js (from US_007 - may consolidate or enhance)
 
 ## Implementation Plan
-1. **Analyze current query patterns**: Review application queries from logs/APM to identify frequently executed queries
-2. **Create time_slots indexes**:
-   - Composite: `(provider_id, appointment_date, is_available)` for slot availability API
-   - Single: `(appointment_date)` for calendar view
-3. **Create appointments indexes**:
-   - Composite: `(patient_id, appointment_date DESC, status)` covering index for patient dashboard
-   - Single: `(status, appointment_date)` for queue management filtering
-   - Single: `(provider_id, appointment_date)` for provider schedule
-4. **Create users indexes**:
-   - Unique: `(email)` for login queries (already likely exists from UNIQUE constraint)
-   - Single: `(role, is_active)` for role-based filtering
-5. **Create audit_logs indexes**:
-   - Composite: `(user_id, created_at DESC)` for user audit trail pagination
-   - Composite: `(resource_type, resource_id, created_at DESC)` for resource-specific audits
-6. **Create clinical_documents indexes**:
-   - Vector: `(embedding)` using HNSW or IVFFlat for similarity search (pgvector)
-   - Single: `(patient_id, created_at DESC)` for patient document history
-7. **Create waitlist indexes**:
-   - Composite: `(slot_id, status, priority DESC)` for waitlist queue processing
-8. **Create notifications indexes**:
-   - Composite: `(user_id, is_read, created_at DESC)` for notification feed
-9. **Use CONCURRENTLY**: All production index creation uses `CREATE INDEX CONCURRENTLY` to avoid table locking
-10. **Validate query plans**: Run EXPLAIN ANALYZE on key queries before/after indexing, verify Index Scan (not Seq Scan)
-11. **Monitor index usage**: Query `pg_stat_user_indexes` weekly to identify unused indexes (idx_scan = 0)
-12. **Document index rationale**: Add comments to each index explaining which query it optimizes
+1. **Query Analysis**: Identify most frequent queries (slot availability, patient lookup, appointment listing)
+2. **Index Type Selection**: B-tree for equality/range, IVFFlat for vector similarity, GiST for specialized cases
+3. **Composite Indexes**: Create multi-column indexes for common WHERE clauses (e.g., appointments by patient + status + date)
+4. **Foreign Key Indexes**: Ensure all FKs have indexes for JOIN performance
+5. **Unique Indexes**: Users.email, PatientProfiles.medical_record_number for constraint + performance
+6. **Partial Indexes**: Index only active records (WHERE active = true, WHERE status = 'pending')
+7. **Expression Indexes**: Index computed values (e.g., LOWER(email) for case-insensitive search)
+8. **Vector Indexes**: IVFFlat with lists=100 for clinical_documents.embedding
+9. **CONCURRENTLY Flag**: Use for production deployments to prevent table locking
+10. **Benchmark Testing**: Execute test queries before/after indexing, verify <100ms/<200ms targets
+11. **Index Monitoring**: Create views for pg_stat_user_indexes, track idx_scan and idx_tup_read
+12. **Maintenance Scripts**: VACUUM ANALYZE after index creation, REINDEX for index bloat
 
 ## Current Project State
 ```
 ASSIGNMENT/
-├── server/
-│   └── db/
-│       ├── schema.sql (tables exist from US_003)
-│       └── indexes.sql (basic FK indexes exist)
-└── (indexes-performance.sql to be created)
+├── app/                     # Frontend (US_001)
+├── server/                  # Backend API (US_002-006)
+├── database/                # Database setup (US_003, US_007)
+│   ├── migrations/
+│   │   ├── 001-009_*.js    # Core schema (US_007)
+│   │   ├── 010_*.js        # Initial indexes (US_007)
+│   │   └── 011_*.js        # Constraints (US_007)
+│   └── docs/
+└── monitoring/              # Grafana + Prometheus (US_005-006)
 ```
 
 ## Expected Changes
 | Action | File Path | Description |
 |--------|-----------|-------------|
-| CREATE | server/db/indexes-performance.sql | Performance indexes with CONCURRENTLY, comments explaining queries |
-| CREATE | server/db/analyze-queries.sql | EXPLAIN ANALYZE for key queries (slot availability, patient lookup, audit trail) |
-| CREATE | server/db/index-monitoring.sql | Queries to check index usage stats from pg_stat_user_indexes |
-| UPDATE | server/db/README.md | Document index strategy, monitoring process, maintenance schedule |
+| CREATE | database/migrations/012_create_performance_indexes.js | B-tree indexes on FKs: patient_profiles.user_id, appointments.patient_id/doctor_id/time_slot_id, etc. |
+| CREATE | database/migrations/013_create_composite_indexes.js | Multi-column: time_slots(doctor_id, slot_date, available), appointments(patient_id, status, appointment_date) |
+| CREATE | database/migrations/014_create_vector_indexes.js | IVFFlat on clinical_documents.embedding with cosine similarity |
+| CREATE | database/migrations/015_create_partial_indexes.js | Partial indexes: users WHERE active=true, appointments WHERE status='pending' |
+| CREATE | database/scripts/analyze_index_usage.sql | Query pg_stat_user_indexes for idx_scan < 10, index size > 1MB |
+| CREATE | database/scripts/benchmark_queries.sql | Test queries with EXPLAIN ANALYZE, measure execution time |
+| CREATE | database/scripts/reindex_bloated.sql | Identify and rebuild bloated indexes |
+| CREATE | database/docs/INDEX_STRATEGY.md | Index design decisions, query patterns, maintenance schedule |
+| CREATE | database/docs/QUERY_OPTIMIZATION.md | Query tuning guide, EXPLAIN plan interpretation, best practices |
+| CREATE | database/tests/performance_benchmark.test.js | Automated tests: slot availability <100ms, patient lookup <200ms |
 
-> Creates 3 new files, updates 1 existing file
+> All files created as new - builds on US_007 schema
 
 ## External References
-- [PostgreSQL Indexes](https://www.postgresql.org/docs/current/indexes.html)
-- [CREATE INDEX CONCURRENTLY](https://www.postgresql.org/docs/current/sql-createindex.html#SQL-CREATEINDEX-CONCURRENTLY)
-- [EXPLAIN ANALYZE](https://www.postgresql.org/docs/current/sql-explain.html)
-- [pgvector Indexing](https://github.com/pgvector/pgvector#indexing)
-- [pg_stat_user_indexes](https://www.postgresql.org/docs/current/monitoring-stats.html#MONITORING-PG-STAT-ALL-INDEXES-VIEW)
-- [Index Maintenance Best Practices](https://www.postgresql.org/docs/current/routine-reindex.html)
+- [PostgreSQL Index Types](https://www.postgresql.org/docs/15/indexes-types.html)
+- [CREATE INDEX CONCURRENTLY](https://www.postgresql.org/docs/15/sql-createindex.html#SQL-CREATEINDEX-CONCURRENTLY)
+- [Index Monitoring](https://www.postgresql.org/docs/15/monitoring-stats.html#MONITORING-PG-STAT-USER-INDEXES-VIEW)
+- [Composite Index Strategy](https://www.postgresql.org/docs/15/indexes-multicolumn.html)
+- [Partial Indexes](https://www.postgresql.org/docs/15/indexes-partial.html)
+- [pgvector IVFFlat Index](https://github.com/pgvector/pgvector#ivfflat)
+- [EXPLAIN ANALYZE](https://www.postgresql.org/docs/15/sql-explain.html)
+- [Index Maintenance](https://www.postgresql.org/docs/15/routine-vacuuming.html)
 
 ## Build Commands
 ```bash
-# Run performance index creation
-cd server/db
-psql -U postgres -d upaci -f indexes-performance.sql
+# Navigate to server directory
+cd server
 
-# Analyze query performance (before/after)
-psql -U postgres -d upaci -f analyze-queries.sql
+# Create migration for performance indexes
+npm run migrate:create create-performance-indexes
+npm run migrate:create create-composite-indexes
+npm run migrate:create create-vector-indexes
+npm run migrate:create create-partial-indexes
 
-# Monitor index usage
-psql -U postgres -d upaci -f index-monitoring.sql
+# Run index migrations
+npm run migrate:up
 
-# Rebuild index if needed (maintenance)
-psql -U postgres -d upaci -c "REINDEX INDEX CONCURRENTLY idx_appointments_patient_date;"
+# Verify indexes created
+psql -U upaci_user -d upaci -c "\di"
+# Expected: List showing 20+ indexes
+
+# Analyze index usage statistics
+psql -U upaci_user -d upaci -f ../database/scripts/analyze_index_usage.sql
+
+# Run VACUUM ANALYZE after index creation
+psql -U upaci_user -d upaci -c "VACUUM ANALYZE;"
+
+# Benchmark slot availability query (target: <100ms)
+psql -U upaci_user -d upaci -c "
+EXPLAIN ANALYZE
+SELECT * FROM time_slots
+WHERE doctor_id = 1 
+  AND slot_date = '2026-03-20'
+  AND available = true
+ORDER BY slot_start_time;
+"
+# Expected: Execution Time: < 100ms, Index Scan on time_slots
+
+# Benchmark patient lookup (target: <200ms)
+psql -U upaci_user -d upaci -c "
+EXPLAIN ANALYZE
+SELECT u.*, pp.* 
+FROM users u
+JOIN patient_profiles pp ON u.id = pp.user_id
+WHERE u.email = 'patient@example.com';
+"
+# Expected: Execution Time: < 200ms, Index Scan on users_email_idx
+
+# Benchmark appointment listing by patient
+psql -U upaci_user -d upaci -c "
+EXPLAIN ANALYZE
+SELECT a.*, u.first_name, u.last_name
+FROM appointments a
+JOIN users u ON a.doctor_id = u.id
+WHERE a.patient_id = 1
+  AND a.status IN ('pending', 'confirmed')
+ORDER BY a.appointment_date DESC
+LIMIT 20;
+"
+# Expected: Execution Time: < 150ms, Index Scan on appointments composite index
+
+# Test vector similarity search (clinical documents)
+psql -U upaci_user -d upaci -c "
+EXPLAIN ANALYZE
+SELECT title, content
+FROM clinical_documents
+WHERE patient_id = 1
+ORDER BY embedding <-> '[1,2,3,...]'::vector
+LIMIT 10;
+"
+# Expected: IVFFlat Index Scan, < 200ms for 1000+ documents
+
+# Monitor index usage over time (run after application load)
+psql -U upaci_user -d upaci -c "
+SELECT 
+  schemaname,
+  tablename,
+  indexname,
+  idx_scan,
+  idx_tup_read,
+  idx_tup_fetch,
+  pg_size_pretty(pg_relation_size(indexrelid)) AS index_size
+FROM pg_stat_user_indexes
+WHERE schemaname = 'public'
+ORDER BY idx_scan ASC;
+"
+# Look for indexes with idx_scan = 0 (unused)
+
+# Identify bloated indexes
+psql -U upaci_user -d upaci -f ../database/scripts/reindex_bloated.sql
+
+# Run performance benchmark tests
+npm test -- performance_benchmark.test.js
+
+# Production deployment (use CONCURRENTLY)
+psql -U upaci_user -d upaci -c "
+CREATE INDEX CONCURRENTLY idx_appointments_patient_status 
+ON appointments(patient_id, status, appointment_date);
+"
+# No table locking, safe for production
 ```
 
 ## Implementation Validation Strategy
-- [ ] Unit tests: N/A (database indexing)
-- [ ] Integration tests: Query performance tests (<100ms slot availability, <200ms patient lookup)
-- [ ] Indexes created: `\di` lists all performance indexes
-- [ ] Index on time_slots: `\d time_slots` shows index on (provider_id, appointment_date, is_available)
-- [ ] Index on appointments: `\d appointments` shows indexes on (patient_id, appointment_date, status), (status, appointment_date)
-- [ ] Index on users: `\d users` shows unique index on (email)
-- [ ] Index on audit_logs: `\d audit_logs` shows index on (user_id, created_at DESC)
-- [ ] Vector index on clinical_documents: `\d clinical_documents` shows HNSW index on (embedding)
-- [ ] Query plan verification (slot availability): `EXPLAIN ANALYZE SELECT * FROM time_slots WHERE provider_id = 'X' AND appointment_date = 'Y' AND is_available = true` → uses Index Scan, cost <5.0, execution <5ms
-- [ ] Query plan verification (patient lookup): `EXPLAIN ANALYZE SELECT * FROM appointments WHERE patient_id = 'X' ORDER BY appointment_date DESC LIMIT 10` → uses Index Scan, execution <10ms
-- [ ] Query plan verification (audit trail): `EXPLAIN ANALYZE SELECT * FROM audit_logs WHERE user_id = 'X' ORDER BY created_at DESC LIMIT 50` → uses Index Scan, execution <20ms
-- [ ] Slot availability query <100ms: Run query 100 times → p95 <100ms
-- [ ] Patient lookup query <200ms: Run query 100 times → p95 <200ms
-- [ ] Index usage monitored: Query pg_stat_user_indexes → all indexes have idx_scan > 0 after 1 week
-- [ ] No unused indexes: No indexes with idx_scan = 0 after 1 month (remove if found)
+- [ ] Unit tests pass (N/A for indexes)
+- [ ] Integration tests pass (performance benchmark tests)
+- [ ] All required indexes created: `\di` shows indexes on timeslots, appointments, users, audit_logs
+- [ ] Composite indexes exist: appointments(patient_id, status, appointment_date), time_slots(doctor_id, slot_date, available)
+- [ ] Vector index created: clinical_documents.embedding with IVFFlat
+- [ ] Unique indexes: users.email, patient_profiles.medical_record_number
+- [ ] Partial indexes: users WHERE active=true, appointments WHERE status='pending'
+- [ ] Slot availability query <100ms: EXPLAIN ANALYZE shows execution time < 100ms
+- [ ] Patient lookup query <200ms: EXPLAIN ANALYZE shows execution time < 200ms
+- [ ] Query plans use indexes: EXPLAIN shows "Index Scan" not "Seq Scan"
+- [ ] Index usage monitored: pg_stat_user_indexes shows idx_scan counts
+- [ ] No unused indexes: All indexes have idx_scan > 0 after load testing
+- [ ] VACUUM ANALYZE completed: Statistics updated for query planner
+- [ ] Concurrent creation tested: CREATE INDEX CONCURRENTLY succeeds without locking
+- [ ] Index size reasonable: Total index size < 2x table size
+- [ ] Performance benchmarks pass: All queries meet latency targets
 
 ## Implementation Checklist
-- [ ] Create server/db/indexes-performance.sql:
-  - [ ] `-- time_slots indexes for slot availability API (GET /api/slots)`
-  - [ ] `CREATE INDEX CONCURRENTLY idx_timeslots_provider_date_available ON time_slots (provider_id, appointment_date, is_available) WHERE is_available = true;`
-  - [ ] `CREATE INDEX CONCURRENTLY idx_timeslots_date ON time_slots (appointment_date);`
-  - [ ] `-- appointments indexes for patient dashboard and queue management`
-  - [ ] `CREATE INDEX CONCURRENTLY idx_appointments_patient_date_status ON appointments (patient_id, appointment_date DESC, status);`
-  - [ ] `CREATE INDEX CONCURRENTLY idx_appointments_status_date ON appointments (status, appointment_date) WHERE status IN ('scheduled', 'confirmed');`
-  - [ ] `CREATE INDEX CONCURRENTLY idx_appointments_provider_date ON appointments (provider_id, appointment_date);`
-  - [ ] `-- users indexes for login and role filtering`
-  - [ ] `CREATE UNIQUE INDEX CONCURRENTLY idx_users_email ON users (email);` (if not exists from UNIQUE constraint)
-  - [ ] `CREATE INDEX CONCURRENTLY idx_users_role_active ON users (role, is_active) WHERE is_active = true;`
-  - [ ] `-- audit_logs indexes for audit trail queries`
-  - [ ] `CREATE INDEX CONCURRENTLY idx_auditlogs_user_created ON audit_logs (user_id, created_at DESC);`
-  - [ ] `CREATE INDEX CONCURRENTLY idx_auditlogs_resource_created ON audit_logs (resource_type, resource_id, created_at DESC);`
-  - [ ] `-- clinical_documents indexes for vector similarity and patient history`
-  - [ ] `CREATE INDEX CONCURRENTLY idx_clinicaldocs_embedding ON clinical_documents USING hnsw (embedding vector_cosine_ops);`
-  - [ ] `CREATE INDEX CONCURRENTLY idx_clinicaldocs_patient_created ON clinical_documents (patient_id, created_at DESC);`
-  - [ ] `-- waitlist indexes for queue processing`
-  - [ ] `CREATE INDEX CONCURRENTLY idx_waitlist_slot_status_priority ON waitlist (slot_id, status, priority DESC) WHERE status = 'waiting';`
-  - [ ] `-- notifications indexes for notification feed`
-  - [ ] `CREATE INDEX CONCURRENTLY idx_notifications_user_unread_created ON notifications (user_id, is_read, created_at DESC);`
-- [ ] Create server/db/analyze-queries.sql:
-  - [ ] `-- Analyze slot availability query`
-  - [ ] `EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM time_slots WHERE provider_id = 'sample-provider-uuid' AND appointment_date = '2025-03-20' AND is_available = true;`
-  - [ ] `-- Analyze patient lookup query`
-  - [ ] `EXPLAIN (ANALYZE, BUFFERS) SELECT a.*, u.first_name, u.last_name FROM appointments a JOIN users u ON a.provider_id = u.id WHERE a.patient_id = 'sample-patient-uuid' ORDER BY a.appointment_date DESC LIMIT 10;`
-  - [ ] `-- Analyze audit trail query`
-  - [ ] `EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM audit_logs WHERE user_id = 'sample-user-uuid' ORDER BY created_at DESC LIMIT 50;`
-  - [ ] `-- Analyze queue management query`
-  - [ ] `EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM appointments WHERE status = 'scheduled' AND appointment_date = CURRENT_DATE ORDER BY appointment_date;`
-- [ ] Create server/db/index-monitoring.sql:
-  - [ ] `-- Check index usage statistics`
-  - [ ] `SELECT schemaname, tablename, indexname, idx_scan, idx_tup_read, idx_tup_fetch FROM pg_stat_user_indexes WHERE schemaname = 'public' ORDER BY idx_scan ASC;`
-  - [ ] `-- Find unused indexes (idx_scan = 0)`
-  - [ ] `SELECT schemaname, tablename, indexname, pg_size_pretty(pg_relation_size(indexrelid)) AS size FROM pg_stat_user_indexes WHERE schemaname = 'public' AND idx_scan = 0 AND indexname NOT LIKE 'pg_%';`
-  - [ ] `-- Show index sizes`
-  - [ ] `SELECT tablename, indexname, pg_size_pretty(pg_relation_size(indexrelid)) AS size FROM pg_stat_user_indexes WHERE schemaname = 'public' ORDER BY pg_relation_size(indexrelid) DESC;`
-- [ ] Run performance index creation: `psql -U postgres -d upaci -f indexes-performance.sql`
-- [ ] Verify indexes created: `psql -U postgres -d upaci -c "\di"` → list includes all idx_* indexes
-- [ ] Run query analysis (before indexing): Save EXPLAIN ANALYZE results as baseline
-- [ ] Run query analysis (after indexing): Compare to baseline → verify Index Scan used, cost reduced by 90%+
-- [ ] Test slot availability query performance:
-  - [ ] `\timing` in psql
-  - [ ] `SELECT * FROM time_slots WHERE provider_id = 'X' AND appointment_date = '2025-03-20' AND is_available = true;`
-  - [ ] Verify execution time <10ms (in-memory), <100ms (cold cache)
-- [ ] Test patient lookup performance:
-  - [ ] `SELECT * FROM appointments WHERE patient_id = 'X' ORDER BY appointment_date DESC LIMIT 10;`
-  - [ ] Verify execution time <20ms
-- [ ] Monitor index usage after 1 week: `psql -U postgres -d upaci -f index-monitoring.sql` → verify all indexes have idx_scan > 0
-- [ ] Update server/db/README.md:
-  - [ ] Document index strategy: Which queries each index optimizes
-  - [ ] Monitoring process: Weekly index usage checks, quarterly maintenance
-  - [ ] Maintenance schedule: REINDEX CONCURRENTLY quarterly for high-churn tables
+
+### Performance Indexes Migration (012_create_performance_indexes.js)
+- [ ] Create migration file: `npm run migrate:create create-performance-indexes`
+- [ ] Implement exports.up function
+- [ ] Create index on users.email (if not already unique index): pgm.createIndex('users', 'email', { unique: true })
+- [ ] Create index on users.role: pgm.createIndex('users', 'role')
+- [ ] Create index on patient_profiles.user_id: pgm.createIndex('patient_profiles', 'user_id')
+- [ ] Create index on patient_profiles.medical_record_number (if not unique): pgm.createIndex('patient_profiles', 'medical_record_number', { unique: true })
+- [ ] Create index on time_slots.doctor_id: pgm.createIndex('time_slots', 'doctor_id')
+- [ ] Create index on time_slots.department_id: pgm.createIndex('time_slots', 'department_id')
+- [ ] Create index on time_slots.slot_date: pgm.createIndex('time_slots', 'slot_date')
+- [ ] Create index on appointments.patient_id: pgm.createIndex('appointments', 'patient_id')
+- [ ] Create index on appointments.doctor_id: pgm.createIndex('appointments', 'doctor_id')
+- [ ] Create index on appointments.department_id: pgm.createIndex('appointments', 'department_id')
+- [ ] Create index on appointments.time_slot_id: pgm.createIndex('appointments', 'time_slot_id')
+- [ ] Create index on appointments.appointment_date: pgm.createIndex('appointments', 'appointment_date')
+- [ ] Create index on appointments.status: pgm.createIndex('appointments', 'status')
+- [ ] Create index on clinical_documents.patient_id: pgm.createIndex('clinical_documents', 'patient_id')
+- [ ] Create index on clinical_documents.appointment_id: pgm.createIndex('clinical_documents', 'appointment_id')
+- [ ] Create index on clinical_documents.created_at: pgm.createIndex('clinical_documents', 'created_at', { method: 'btree', order: 'DESC' })
+- [ ] Create index on waitlist.patient_id: pgm.createIndex('waitlist', 'patient_id')
+- [ ] Create index on waitlist.department_id: pgm.createIndex('waitlist', 'department_id')
+- [ ] Create index on waitlist.status: pgm.createIndex('waitlist', 'status')
+- [ ] Create index on notifications.user_id: pgm.createIndex('notifications', 'user_id')
+- [ ] Create index on notifications.read: pgm.createIndex('notifications', 'read')
+- [ ] Create index on notifications.sent_at: pgm.createIndex('notifications', 'sent_at', { order: 'DESC' })
+- [ ] Create index on audit_logs.user_id: pgm.createIndex('audit_logs', 'user_id')
+- [ ] Create index on audit_logs.table_name: pgm.createIndex('audit_logs', 'table_name')
+- [ ] Create index on audit_logs.created_at: pgm.createIndex('audit_logs', 'created_at', { order: 'DESC' })
+- [ ] Implement exports.down to drop all indexes
+
+### Composite Indexes Migration (013_create_composite_indexes.js)
+- [ ] Create migration file
+- [ ] Create composite index on time_slots(doctor_id, slot_date, available):
+  - pgm.createIndex('time_slots', ['doctor_id', 'slot_date', 'available'], { name: 'idx_time_slots_doctor_date_available' })
+  - Purpose: Fast slot availability lookup for specific doctor and date
+- [ ] Create composite index on appointments(patient_id, status, appointment_date):
+  - pgm.createIndex('appointments', ['patient_id', 'status', 'appointment_date'], { name: 'idx_appointments_patient_status_date' })
+  - Purpose: Patient appointment history with status filter
+- [ ] Create composite index on appointments(doctor_id, appointment_date):
+  - pgm.createIndex('appointments', ['doctor_id', 'appointment_date'], { name: 'idx_appointments_doctor_date' })
+  - Purpose: Doctor's schedule/calendar view
+- [ ] Create composite index on clinical_documents(patient_id, created_at DESC):
+  - pgm.createIndex('clinical_documents', ['patient_id', { name: 'created_at', sort: 'DESC' }], { name: 'idx_clinical_docs_patient_recent' })
+  - Purpose: Recent documents for patient
+- [ ] Create composite index on waitlist(department_id, status, priority):
+  - pgm.createIndex('waitlist', ['department_id', 'status', 'priority'], { name: 'idx_waitlist_dept_status_priority' })
+  - Purpose: Prioritized waitlist per department
+- [ ] Create composite index on notifications(user_id, read, sent_at DESC):
+  - pgm.createIndex('notifications', ['user_id', 'read', { name: 'sent_at', sort: 'DESC' }], { name: 'idx_notifications_user_recent' })
+  - Purpose: Unread notifications for user
+- [ ] Create composite index on audit_logs(table_name, record_id, created_at DESC):
+  - pgm.createIndex('audit_logs', ['table_name', 'record_id', { name: 'created_at', sort: 'DESC' }], { name: 'idx_audit_logs_record_history' })
+  - Purpose: Audit history for specific record
+- [ ] Implement exports.down to drop composite indexes
+
+### Vector Indexes Migration (014_create_vector_indexes.js)
+- [ ] Create migration file
+- [ ] Create IVFFlat index on clinical_documents.embedding:
+  - pgm.sql("CREATE INDEX idx_clinical_documents_embedding ON clinical_documents USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);")
+  - lists = 100: Good for 10K-1M documents, adjust based on data size
+  - vector_cosine_ops: Cosine similarity operator (<->)
+- [ ] Alternative: HNSW index (if available in pgvector version):
+  - pgm.sql("CREATE INDEX idx_clinical_documents_embedding_hnsw ON clinical_documents USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);")
+  - HNSW: Faster queries, slower inserts
+- [ ] Implement exports.down to drop vector indexes
+
+### Partial Indexes Migration (015_create_partial_indexes.js)
+- [ ] Create migration file
+- [ ] Create partial index on users WHERE active=true:
+  - pgm.sql("CREATE INDEX idx_users_active_email ON users(email) WHERE active = true;")
+  - Purpose: Fast lookup of active users only
+- [ ] Create partial index on appointments WHERE status IN ('pending', 'confirmed'):
+  - pgm.sql("CREATE INDEX idx_appointments_upcoming ON appointments(patient_id, appointment_date) WHERE status IN ('pending', 'confirmed');")
+  - Purpose: Upcoming appointments query
+- [ ] Create partial index on time_slots WHERE available=true:
+  - pgm.sql("CREATE INDEX idx_time_slots_available ON time_slots(doctor_id, slot_date) WHERE available = true;")
+  - Purpose: Only index available slots (smaller index)
+- [ ] Create partial index on notifications WHERE read=false:
+  - pgm.sql("CREATE INDEX idx_notifications_unread ON notifications(user_id, sent_at DESC) WHERE read = false;")
+  - Purpose: Unread notifications (most common query)
+- [ ] Implement exports.down to drop partial indexes
+
+### Index Usage Analysis Script (database/scripts/analyze_index_usage.sql)
+- [ ] Create SQL script to query pg_stat_user_indexes
+- [ ] Query: SELECT schemaname, tablename, indexname, idx_scan, idx_tup_read, idx_tup_fetch, pg_size_pretty(pg_relation_size(indexrelid)) AS index_size
+- [ ] Filter: WHERE schemaname = 'public' AND idx_scan < 10
+- [ ] Sort: ORDER BY idx_scan ASC, pg_relation_size(indexrelid) DESC
+- [ ] Purpose: Identify unused indexes (idx_scan = 0 or very low) consuming space
+- [ ] Add recommendations: -- If idx_scan = 0 after 7 days, consider dropping index
+
+### Benchmark Queries Script (database/scripts/benchmark_queries.sql)
+- [ ] Create SQL script with EXPLAIN ANALYZE for critical queries
+- [ ] Query 1: Slot availability (target <100ms)
+  - EXPLAIN ANALYZE SELECT * FROM time_slots WHERE doctor_id = ? AND slot_date = ? AND available = true ORDER BY slot_start_time;
+- [ ] Query 2: Patient lookup by email (target <200ms)
+  - EXPLAIN ANALYZE SELECT u.*, pp.* FROM users u JOIN patient_profiles pp ON u.id = pp.user_id WHERE u.email = ?;
+- [ ] Query 3: Patient appointments (target <150ms)
+  - EXPLAIN ANALYZE SELECT * FROM appointments WHERE patient_id = ? AND status IN ('pending', 'confirmed') ORDER BY appointment_date DESC LIMIT 20;
+- [ ] Query 4: Doctor schedule (target <200ms)
+  - EXPLAIN ANALYZE SELECT a.*, u.first_name, u.last_name FROM appointments a JOIN users u ON a.patient_id = u.user_id WHERE a.doctor_id = ? AND a.appointment_date >= CURRENT_DATE ORDER BY a.appointment_date;
+- [ ] Query 5: Waitlist by priority (target <100ms)
+  - EXPLAIN ANALYZE SELECT w.*, pp.*, u.first_name, u.last_name FROM waitlist w JOIN patient_profiles pp ON w.patient_id = pp.id JOIN users u ON pp.user_id = u.id WHERE w.department_id = ? AND w.status = 'waiting' ORDER BY w.priority, w.created_at;
+- [ ] Add timing extraction: \timing on
+
+### Reindex Bloated Script (database/scripts/reindex_bloated.sql)
+- [ ] Create SQL script to identify bloated indexes
+- [ ] Query index bloat: Use pg_stat_user_indexes and pg_class to calculate bloat percentage
+- [ ] Threshold: bloat > 30% and size > 10MB
+- [ ] Generate REINDEX commands: REINDEX INDEX CONCURRENTLY <index_name>;
+- [ ] Add warning: -- Run during low-traffic periods
+
+### Index Strategy Documentation (database/docs/INDEX_STRATEGY.md)
+- [ ] Document index design principles
+- [ ] Explain B-tree for equality/range queries (=, <, >, BETWEEN)
+- [ ] Explain IVFFlat for vector similarity (approximate nearest neighbor)
+- [ ] Explain composite index column order: Most selective column first, common filters before sort columns
+- [ ] Document query patterns: slot availability, patient lookup, appointment listing
+- [ ] Explain partial indexes: When to use (frequent filter on one value)
+- [ ] Document CONCURRENTLY usage: Production deployments to avoid locks
+- [ ] Maintenance schedule: VACUUM ANALYZE weekly, REINDEX bloated indexes monthly, review unused indexes quarterly
+- [ ] Index size guidelines: Total index size should be 1-2x table size
+
+### Query Optimization Guide (database/docs/QUERY_OPTIMIZATION.md)
+- [ ] Document EXPLAIN ANALYZE interpretation
+- [ ] Seq Scan vs Index Scan: When each appears, why
+- [ ] Bitmap Index Scan: Combining multiple indexes
+- [ ] Cost estimation: Understanding planner output
+- [ ] Query rewriting: Examples of optimizing slow queries
+- [ ] JOIN strategies: Nested Loop, Hash Join, Merge Join
+- [ ] Common anti-patterns: SELECT *, OR clauses, implicit type conversions
+- [ ] Performance targets: <100ms slot queries, <200ms patient lookups
+- [ ] Monitoring: Using pg_stat_statements, slow query log
+
+### Performance Benchmark Tests (database/tests/performance_benchmark.test.js)
+- [ ] Create test file with performance assertions
+- [ ] Test: "Slot availability query completes in <100ms"
+  - Execute query 10 times, calculate average execution time
+  - Assert: avgTime < 100ms
+- [ ] Test: "Patient lookup query completes in <200ms"
+  - Execute query 10 times, assert avgTime < 200ms
+- [ ] Test: "Patient appointments query completes in <150ms"
+- [ ] Test: "Vector similarity search completes in <200ms"
+- [ ] Test: "All queries use index scans"
+  - Parse EXPLAIN output, assert no "Seq Scan" on large tables
+- [ ] Test: "No missing indexes on foreign keys"
+  - Query information_schema for FKs without indexes
+- [ ] Run tests: npm test -- performance_benchmark.test.js
+
+### Execution and Validation
+- [ ] Run all index migrations: npm run migrate:up
+- [ ] Verify migrations succeeded: Check migration status table
+- [ ] Run VACUUM ANALYZE: Rebuild statistics for query planner
+- [ ] Execute benchmark queries: Run benchmark_queries.sql
+- [ ] Verify query times: Slot availability <100ms, patient lookup <200ms
+- [ ] Check query plans: All use Index Scan, not Seq Scan
+- [ ] Load test application: Generate realistic traffic (1000+ queries/min)
+- [ ] Monitor index usage: Run analyze_index_usage.sql after 24h
+- [ ] Identify unused indexes: Check for idx_scan = 0
+- [ ] Run performance tests: npm test -- performance_benchmark.test.js → all pass
+- [ ] Document results: Update INDEX_STRATEGY.md with actual performance metrics
+- [ ] Production planning: Prepare CONCURRENTLY commands for production deployment

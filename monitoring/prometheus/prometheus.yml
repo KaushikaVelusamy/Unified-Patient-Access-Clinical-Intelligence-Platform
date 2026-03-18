@@ -1,0 +1,85 @@
+# Prometheus Configuration
+# Documentation: https://prometheus.io/docs/prometheus/latest/configuration/configuration/
+
+# Global configuration
+global:
+  scrape_interval: 15s     # Scrape targets every 15 seconds
+  evaluation_interval: 15s # Evaluate rules every 15 seconds
+  scrape_timeout: 10s      # Timeout after 10 seconds
+  
+  # Attach these labels to all time series or alerts
+  external_labels:
+    monitor: 'clinical-appointment-platform'
+    environment: 'development'
+    cluster: 'upaci-backend'
+
+# Alertmanager configuration (optional)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - 'alertmanager:9093'
+
+# Load alert rules
+rule_files:
+  - '/etc/prometheus/alerts.yml'
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+          environment: 'development'
+
+  # Backend API metrics
+  - job_name: 'upaci-backend'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: '/metrics'
+    scheme: 'http'
+    
+    # Basic authentication (if metrics endpoint is protected)
+    basic_auth:
+      username: 'admin'
+      password: 'secure_password'
+    
+    # Static targets (development)
+    static_configs:
+      - targets: ['host.docker.internal:3001']
+        labels:
+          service: 'backend-api'
+          environment: 'development'
+          instance: 'backend-1'
+    
+    # Relabeling to clean up labels
+    metric_relabel_configs:
+      # Drop unwanted metrics
+      - source_labels: [__name__]
+        regex: 'go_.*'
+        action: drop
+      
+      # Add custom labels
+      - source_labels: [__address__]
+        target_label: instance
+        regex: '([^:]+)(?::\d+)?'
+        replacement: '$1'
+
+  # Node Exporter (optional - for OS-level metrics)
+  # Uncomment if you want to monitor host system metrics
+  # - job_name: 'node-exporter'
+  #   static_configs:
+  #     - targets: ['node-exporter:9100']
+  #       labels:
+  #         service: 'node-exporter'
+  #         environment: 'development'
+
+  # Grafana metrics (optional - monitor Grafana itself)
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+        labels:
+          service: 'grafana'
+          environment: 'development'

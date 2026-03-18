@@ -1,0 +1,168 @@
+# Prometheus Alert Rules
+# Documentation: https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/
+
+groups:
+  - name: upaci_backend_alerts
+    interval: 30s
+    rules:
+      # High Error Rate Alert
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{job="upaci-backend",status_code=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total{job="upaci-backend"}[5m]))
+          ) * 100 > 1
+        for: 5m
+        labels:
+          severity: critical
+          service: backend-api
+        annotations:
+          summary: "High error rate detected ({{ $value | humanizePercentage }})"
+          description: "Error rate is {{ $value | humanizePercentage }} on {{ $labels.instance }} (threshold: 1%)"
+          dashboard: "http://grafana:3000/d/upaci-system-health"
+      
+      # Slow Response Time (P95 > 2s)
+      - alert: SlowResponseTime
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket{job="upaci-backend"}[5m])) by (le, route)
+          ) > 2
+        for: 10m
+        labels:
+          severity: warning
+          service: backend-api
+        annotations:
+          summary: "Slow response time on {{ $labels.route }}"
+          description: "95th percentile response time is {{ $value }}s on {{ $labels.route }} (threshold: 2s)"
+          dashboard: "http://grafana:3000/d/upaci-system-health"
+      
+      # Very Slow Response Time (P99 > 5s)
+      - alert: VerySlowResponseTime
+        expr: |
+          histogram_quantile(0.99,
+            sum(rate(http_request_duration_seconds_bucket{job="upaci-backend"}[5m])) by (le, route)
+          ) > 5
+        for: 5m
+        labels:
+          severity: critical
+          service: backend-api
+        annotations:
+          summary: "Very slow response time on {{ $labels.route }}"
+          description: "99th percentile response time is {{ $value }}s on {{ $labels.route }} (threshold: 5s)"
+          dashboard: "http://grafana:3000/d/upaci-system-health"
+      
+      # Service Down (Uptime < 100%)
+      - alert: ServiceDown
+        expr: up{job="upaci-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: backend-api
+        annotations:
+          summary: "Backend API is down"
+          description: "Backend API {{ $labels.instance }} has been down for more than 1 minute"
+          dashboard: "http://grafana:3000/d/upaci-system-health"
+      
+      # Low Uptime (< 99.9% over 24h)
+      - alert: LowUptime
+        expr: |
+          avg_over_time(up{job="upaci-backend"}[24h]) * 100 < 99.9
+        for: 5m
+        labels:
+          severity: warning
+          service: backend-api
+        annotations:
+          summary: "Low uptime detected ({{ $value | humanizePercentage }})"
+          description: "Uptime is {{ $value | humanizePercentage }} over the last 24 hours (threshold: 99.9%)"
+          dashboard: "http://grafana:3000/d/upaci-system-health"
+      
+      # High CPU Usage
+      - alert: HighCPUUsage
+        expr: rate(process_cpu_seconds_total{job="upaci-backend"}[5m]) * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+          service: backend-api
+        annotations:
+          summary: "High CPU usage ({{ $value }}%)"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }} (threshold: 80%)"
+          dashboard: "http://grafana:3000/d/upaci-infrastructure"
+      
+      # High Memory Usage
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            nodejs_heap_size_used_bytes{job="upaci-backend"}
+            /
+            nodejs_heap_size_total_bytes{job="upaci-backend"}
+          ) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          service: backend-api
+        annotations:
+          summary: "High memory usage ({{ $value }}%)"
+          description: "Memory usage is {{ $value }}% on {{ $labels.instance }} (threshold: 90%)"
+          dashboard: "http://grafana:3000/d/upaci-infrastructure"
+      
+      # High Event Loop Lag
+      - alert: HighEventLoopLag
+        expr: nodejs_eventloop_lag_seconds{job="upaci-backend"} > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: backend-api
+        annotations:
+          summary: "High event loop lag ({{ $value }}s)"
+          description: "Event loop lag is {{ $value }}s on {{ $labels.instance }} (threshold: 0.1s)"
+          dashboard: "http://grafana:3000/d/upaci-infrastructure"
+      
+      # High Active Connections
+      - alert: HighActiveConnections
+        expr: active_connections{job="upaci-backend"} > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: backend-api
+        annotations:
+          summary: "High active connections ({{ $value }})"
+          description: "Active connections count is {{ $value }} on {{ $labels.instance }} (threshold: 100)"
+          dashboard: "http://grafana:3000/d/upaci-system-health"
+      
+      # No Metrics Being Scraped
+      - alert: MetricsScrapeFailure
+        expr: up{job="upaci-backend"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: backend-api
+        annotations:
+          summary: "Metrics scrape failure"
+          description: "Failed to scrape metrics from {{ $labels.instance }} for more than 2 minutes"
+          dashboard: "http://grafana:3000/d/upaci-system-health"
+
+  - name: prometheus_alerts
+    interval: 60s
+    rules:
+      # Prometheus Configuration Reload Failed
+      - alert: PrometheusConfigReloadFailed
+        expr: prometheus_config_last_reload_successful == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: prometheus
+        annotations:
+          summary: "Prometheus configuration reload failed"
+          description: "Prometheus configuration reload has failed on {{ $labels.instance }}"
+      
+      # Prometheus Target Down
+      - alert: PrometheusTargetDown
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: prometheus
+        annotations:
+          summary: "Prometheus target down"
+          description: "{{ $labels.job }} target {{ $labels.instance }} is down"

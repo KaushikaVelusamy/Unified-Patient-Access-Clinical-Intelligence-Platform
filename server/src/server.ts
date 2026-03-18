@@ -1,0 +1,168 @@
+import http from 'http';
+import config from './config/env';
+import logger from './utils/logger';
+import { createApp } from './app';
+import { performHealthCheck } from './utils/dbHealthCheck';
+import { closePool } from './config/database';
+import { performHealthCheck as performRedisHealthCheck } from './utils/redisHealthCheck';
+import redisClient from './utils/redisClient';
+
+/**
+ * Attempts to start server on specified port
+ * Falls back to next port if current port is occupied
+ * @param port - Port number to try
+ * @param maxPort - Maximum port number to try (3001-3005)
+ * @returns Promise resolving to the port used
+ */
+const startServer = async (port: number, maxPort: number = 3005): Promise<number> => {
+  const app = createApp();
+  const server = http.createServer(app);
+
+  return new Promise((resolve, reject) => {
+    server.on('error', (error: NodeJS.ErrnoException) => {
+      if (error.code === 'EADDRINUSE') {
+        logger.warn(`Port ${port} is in use, trying ${port + 1}...`);
+        if (port < maxPort) {
+          server.close();
+          resolve(startServer(port + 1, maxPort));
+        } else {
+          reject(
+            new Error(
+              `All ports from ${config.port} to ${maxPort} are in use. Please free up a port.`,
+            ),
+          );
+        }
+      } else {
+        reject(error);
+      }
+    });
+
+    server.listen(port, () => {
+      logger.info(`✓ Server running on port ${port}`);
+      logger.info(`✓ Environment: ${config.nodeEnv}`);
+      logger.info(`✓ API available at: http://localhost:${port}/api`);
+      logger.info(`✓ Health check: http://localhost:${port}/api/health`);
+      resolve(port);
+    });
+
+    // Graceful shutdown
+    const shutdown = async (signal: string) => {
+      logger.info(`${signal} received. Closing server gracefully...`);
+      
+      // Close HTTP server first
+      server.close(async () => {
+        logger.info('HTTP server closed');
+        
+        // Close database connections
+        try {
+          await closePool();
+        } catch (error) {
+          logger.error('Error closing database pool:', error);
+        }
+        
+        // Close Redis connection
+        try {
+          await redisClient.disconnect();
+        } catch (error) {
+          logger.error('Error closing Redis connection:', error);
+        }
+        
+        logger.info('Server closed successfully');
+        process.exit(0);
+      });
+
+      // Force shutdown after 10 seconds
+      setTimeout(() => {
+        logger.error('Forcing shutdown after timeout');
+        process.exit(1);
+      }, 10000);
+    };
+
+    // Handle shutdown signals
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT', () => shutdown('SIGINT'));
+  });
+};
+
+/**
+ * Global unhandled rejection handler
+ */
+process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
+  logger.error('Unhandled Promise Rejection:', {
+    reason: reason?.message || reason,
+    stack: reason?.stack,
+    promise,
+  });
+
+  // In production, you might want to restart the server
+  if (config.nodeEnv === 'production') {
+    logger.error('Shutting down due to unhandled promise rejection');
+    process.exit(1);
+  }
+});
+
+/**
+ * Global uncaught exception handler
+ */
+process.on('uncaughtException', (error: Error) => {
+  logger.error('Uncaught Exception:', {
+    message: error.message,
+    stack: error.stack,
+  });
+
+  // Always shut down on uncaught exceptions
+  logger.error('Shutting down due to uncaught exception');
+  process.exit(1);
+});
+
+/**
+ * Start the server
+ */
+const init = async () => {
+  try {
+    // Validate environment variables
+    logger.info('Validating environment variables...');
+    
+    // Test database connection with retry logic
+    logger.info('Connecting to database...');
+    await performHealthCheck();
+    
+    // Test Redis connection (non-blocking - application continues if Redis fails)
+    logger.info('Connecting to Redis...');
+    try {
+      await performRedisHealthCheck();
+      logger.info('✓ Redis connection established');
+    } catch (error) {
+      logger.warn('⚠ Redis connection failed - continuing with database fallback');
+      logger.debug('Redis error:', error);
+    }
+    
+    // Start HTTP server
+    const usedPort = await startServer(config.port);
+    
+    if (usedPort !== config.port) {
+      logger.warn(`Note: Server started on port ${usedPort} instead of configured port ${config.port}`);
+    }
+  } catch (error) {
+    logger.error('Failed to start server:', error);
+    
+    // Clean up database connections on startup failure
+    try {
+      await closePool();
+    } catch (cleanupError) {
+      logger.error('Error during cleanup:', cleanupError);
+    }
+    
+    // Clean up Redis connection
+    try {
+      await redisClient.disconnect();
+    } catch (cleanupError) {
+      logger.error('Error during Redis cleanup:', cleanupError);
+    }
+    
+    process.exit(1);
+  }
+};
+
+// Start the server
+init();

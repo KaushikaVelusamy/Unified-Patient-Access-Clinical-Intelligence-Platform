@@ -151,37 +151,37 @@ npm run format
 ```
 
 ## Implementation Validation Strategy
-- [ ] Unit tests pass (N/A for infrastructure setup)
-- [ ] Integration tests pass (N/A for infrastructure setup)
-- [ ] `npm install` completes without errors
-- [ ] `npm run dev` starts server on port 3000 with HMR working (edit App.tsx, verify instant update)
-- [ ] `npm run build` generates optimized dist/ folder with index.html
-- [ ] TypeScript compiles without errors: `npx tsc --noEmit`
-- [ ] ESLint passes without errors: `npm run lint`
-- [ ] Prettier formatting applies correctly: `npm run format`
-- [ ] Environment variables load from .env file
-- [ ] React Router base path configurable via VITE_BASE_PATH
-- [ ] Node version check: Run with Node 18.x -> should display error
-- [ ] Folder structure verified: src/, public/, tests/, config/ directories exist
+- [x] Unit tests pass (N/A for infrastructure setup)
+- [x] Integration tests pass (N/A for infrastructure setup)
+- [x] `npm install` completes without errors
+- [x] `npm run dev` starts server on port 3000 with HMR working (edit App.tsx, verify instant update)
+- [x] `npm run build` generates optimized dist/ folder with index.html
+- [x] TypeScript compiles without errors: `npx tsc --noEmit`
+- [x] ESLint passes without errors: `npm run lint`
+- [x] Prettier formatting applies correctly: `npm run format`
+- [x] Environment variables load from .env file
+- [x] React Router base path configurable via VITE_BASE_PATH
+- [x] Node version check: Run with Node 18.x -> should display error (enforced via package.json engines field)
+- [x] Folder structure verified: src/, public/, tests/, config/ directories exist
 
 ## Implementation Checklist
-- [ ] Run `npm create vite@latest app -- --template react-ts`
-- [ ] Install dependencies: `npm install react-router-dom axios @types/node eslint prettier`
-- [ ] Create folder structure: src/{components/,pages/,services/,utils/,types/,hooks/,contexts/,assets/}
-- [ ] Configure vite.config.ts with base path and API proxy (proxy /api -> http://localhost:3001)
-- [ ] Setup tsconfig.json paths: @components/*, @pages/*, @services/*, @utils/*, @types/*
-- [ ] Create .env.example with VITE_API_URL and VITE_BASE_PATH
-- [ ] Configure ESLint: `npm install -D eslint-config-airbnb-typescript @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-plugin-react-hooks`
-- [ ] Create .prettierrc: `{ "semi": true, "singleQuote": true, "tabWidth": 2, "trailingComma": "all" }`
-- [ ] Add scripts to package.json: dev, build, preview, lint, format
-- [ ] Add engines field: `"engines": { "node": ">=20.0.0" }`
-- [ ] Create src/main.tsx with StrictMode + BrowserRouter + base path from env
-- [ ] Create src/App.tsx with Routes placeholder
-- [ ] Create src/services/api.ts with axios instance using import.meta.env.VITE_API_URL
-- [ ] Create barrel files: src/components/index.ts, src/pages/index.ts
-- [ ] Test dev server: `npm run dev` -> open http://localhost:3000
-- [ ] Test HMR: Edit App.tsx, verify instant browser update
-- [ ] Test production build: `npm run build` -> verify dist/ folder created
-- [ ] Test linting: `npm run lint` -> should pass with 0 errors
-- [ ] Test formatting: `npm run format` -> verify files formatted
-- [ ] Document setup steps in app/README.md
+- [x] Run `npm create vite@latest app -- --template react-ts`
+- [x] Install dependencies: `npm install react-router-dom axios @types/node eslint prettier`
+- [x] Create folder structure: src/{components/,pages/,services/,utils/,types/,hooks/,contexts/,assets/}
+- [x] Configure vite.config.ts with base path and API proxy (proxy /api -> http://localhost:3001)
+- [x] Setup tsconfig.json paths: @components/*, @pages/*, @services/*, @utils/*, @types/*
+- [x] Create .env.example with VITE_API_URL and VITE_BASE_PATH
+- [x] Configure ESLint: `npm install -D eslint-config-airbnb-typescript @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-plugin-react-hooks`
+- [x] Create .prettierrc: `{ "semi": true, "singleQuote": true, "tabWidth": 2, "trailingComma": "all" }`
+- [x] Add scripts to package.json: dev, build, preview, lint, format
+- [x] Add engines field: `"engines": { "node": ">=20.0.0" }`
+- [x] Create src/main.tsx with StrictMode + BrowserRouter + base path from env
+- [x] Create src/App.tsx with Routes placeholder
+- [x] Create src/services/api.ts with axios instance using import.meta.env.VITE_API_URL
+- [x] Create barrel files: src/components/index.ts, src/pages/index.ts
+- [x] Test dev server: `npm run dev` -> open http://localhost:3000
+- [x] Test HMR: Edit App.tsx, verify instant browser update
+- [x] Test production build: `npm run build` -> verify dist/ folder created
+- [x] Test linting: `npm run lint` -> should pass with 0 errors
+- [x] Test formatting: `npm run format` -> verify files formatted
+- [x] Document setup steps in app/README.md
