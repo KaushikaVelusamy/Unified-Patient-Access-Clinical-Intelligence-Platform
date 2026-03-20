@@ -1,0 +1,22 @@
+<svg width="200" height="80" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80">
+  <!-- Background -->
+  <rect width="200" height="80" fill="#1e3a8a" rx="4"/>
+  
+  <!-- Medical Cross Icon -->
+  <g transform="translate(20, 20)">
+    <!-- Vertical bar -->
+    <rect x="15" y="5" width="10" height="30" fill="white"/>
+    <!-- Horizontal bar -->
+    <rect x="8" y="15" width="24" height="10" fill="white"/>
+  </g>
+  
+  <!-- Clinic Name -->
+  <text x="65" y="35" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="white">
+    Healthcare Plus
+  </text>
+  
+  <!-- Tagline -->
+  <text x="65" y="52" font-family="Arial, sans-serif" font-size="11" fill="#93c5fd">
+    Compassionate Care, Advanced Medicine
+  </text>
+</svg>

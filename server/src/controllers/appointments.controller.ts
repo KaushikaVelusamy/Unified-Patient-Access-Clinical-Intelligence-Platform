@@ -12,6 +12,8 @@
 import { Request, Response } from 'express';
 import appointmentsService from '../services/appointments.service';
 import { sendAppointmentConfirmation } from '../services/emailService';
+import { generateAppointmentPDFBuffer } from '../services/pdfService';
+import { savePDF, generateSecureDownloadURL } from '../services/storageService';
 import { syncAppointmentToCalendarAsync } from '../services/calendarSyncService';
 import waitlistNotificationService from '../services/waitlistNotificationService';
 import { acceptWaitlistSlot } from '../services/waitlistAcceptanceService';
@@ -144,6 +146,37 @@ class AppointmentsController {
         logger.error('Failed to queue confirmation email:', {
           appointmentId: bookingResult.appointmentId,
           error: emailError.message,
+        });
+      }
+
+      // Generate and save PDF to storage (async, don't block response)
+      // Implements US_018 AC1: Automatically generate PDF after booking
+      // Implements US_018 AC2: Return secure download URL valid for 7 days
+      try {
+        // Generate PDF and save to storage asynchronously
+        (async () => {
+          try {
+            const pdfBuffer = await generateAppointmentPDFBuffer(bookingResult.appointmentId);
+            await savePDF(pdfBuffer, {
+              appointmentId: bookingResult.appointmentId,
+              createdBy: req.user?.email || 'system',
+            });
+            const downloadUrlResult = await generateSecureDownloadURL(bookingResult.appointmentId);
+            logger.info('PDF generated and saved after booking', {
+              appointmentId: bookingResult.appointmentId,
+              downloadUrl: downloadUrlResult.url,
+            });
+          } catch (pdfError: any) {
+            logger.error('Failed to generate/save PDF after booking (async):', {
+              appointmentId: bookingResult.appointmentId,
+              error: pdfError.message,
+            });
+          }
+        })();
+      } catch (pdfError: any) {
+        logger.error('Failed to queue PDF generation:', {
+          appointmentId: bookingResult.appointmentId,
+          error: pdfError.message,
         });
       }
 
@@ -506,6 +539,36 @@ class AppointmentsController {
         logger.error('Failed to queue reschedule confirmation email:', {
           appointmentId,
           error: emailError.message,
+        });
+      }
+
+      // Regenerate and save updated PDF to storage (async, don't block response)
+      // Implements US_018 AC1: Automatically generate new PDF after rescheduling
+      // Implements US_018 AC2: Return secure download URL valid for 7 days
+      try {
+        (async () => {
+          try {
+            const pdfBuffer = await generateAppointmentPDFBuffer(appointmentId);
+            await savePDF(pdfBuffer, {
+              appointmentId,
+              createdBy: req.user?.email || 'system',
+            });
+            const downloadUrlResult = await generateSecureDownloadURL(appointmentId);
+            logger.info('PDF regenerated and saved after rescheduling', {
+              appointmentId,
+              downloadUrl: downloadUrlResult.url,
+            });
+          } catch (pdfError: any) {
+            logger.error('Failed to regenerate/save PDF after rescheduling (async):', {
+              appointmentId,
+              error: pdfError.message,
+            });
+          }
+        })();
+      } catch (pdfError: any) {
+        logger.error('Failed to queue PDF regeneration:', {
+          appointmentId,
+          error: pdfError.message,
         });
       }
 

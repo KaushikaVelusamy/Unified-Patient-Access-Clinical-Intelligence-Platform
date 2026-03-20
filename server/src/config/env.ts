@@ -76,6 +76,14 @@ interface Config {
     level: string;
     filePath: string;
   };
+
+  // PDF Storage
+  pdfStorage: {
+    basePath: string;
+    downloadUrlExpiryDays: number;
+    pdfRetentionDays: number;
+    baseUrl: string;
+  };
 }
 
 /**
@@ -172,6 +180,14 @@ export const config: Config = {
   logging: {
     level: process.env.LOG_LEVEL || 'info',
     filePath: process.env.LOG_FILE_PATH || 'logs/app.log',
+  },
+
+  // PDF Storage configuration
+  pdfStorage: {
+    basePath: path.join(__dirname, '../../storage/pdfs'),
+    downloadUrlExpiryDays: parseInt(process.env.PDF_DOWNLOAD_URL_EXPIRY_DAYS || '7', 10),
+    pdfRetentionDays: parseInt(process.env.PDF_RETENTION_DAYS || '30', 10),
+    baseUrl: process.env.API_BASE_URL || `http://localhost:${parseInt(process.env.PORT || '3001', 10)}`,
   },
 };
 

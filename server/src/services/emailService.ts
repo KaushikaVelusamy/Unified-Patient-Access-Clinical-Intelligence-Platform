@@ -27,6 +27,17 @@ import { emailConfig, validateEmailConfig } from '../config/email.config';
 import { generateAppointmentPDFBuffer } from './pdfService';
 import { logSecurityEvent } from '../utils/auditLogger';
 import logger from '../utils/logger';
+import { 
+  EmailResult,
+  EmailStatus,
+  AppointmentEmailData as AppointmentEmailDataV18,
+  EmailRetryConfig 
+} from '../types/email.types';
+import { 
+  generateAppointmentConfirmationText,
+  generateAppointmentConfirmationSubject,
+  generateTextOnlyFallback
+} from '../templates/email/appointmentConfirmation.text';
 
 /**
  * Appointment data for email
@@ -834,4 +845,415 @@ export const closeEmailTransporter = async (): Promise<void> => {
     transporter.close();
     transporter = null;
   }
+};
+
+/**
+ * US_018 TASK_003: Enhanced Email Service Functions
+ * 
+ * These functions implement the US_018 requirements for email service with:
+ * - HTML template rendering (appointmentConfirmation.html)
+ * - Plain text template generation (appointmentConfirmation.text.ts)
+ * - Email logging to email_log table
+ * - Retry logic with exponential backoff
+ * - Text-only fallback when PDF fails
+ */
+
+/**
+ * Default retry configuration for email sending
+ */
+const DEFAULT_RETRY_CONFIG: EmailRetryConfig = {
+  maxRetries: 2,
+  initialDelay: 5000, // 5 seconds
+  multiplier: 2,
+  maxDelay: 30000, // 30 seconds
+};
+
+/**
+ * Render HTML email template from appointmentConfirmation.html
+ * 
+ * @param data - Appointment data for template
+ * @returns Rendered HTML string
+ */
+const renderHTMLEmailTemplate = (data: AppointmentEmailDataV18): string => {
+  const templatePath = path.join(__dirname, '../templates/email/appointmentConfirmation.html');
+  
+  if (!fs.existsSync(templatePath)) {
+    throw new Error(`HTML email template not found at ${templatePath}`);
+  }
+  
+  let template = fs.readFileSync(templatePath, 'utf-8');
+  
+  // Replace template variables
+  template = template.replace(/\{\{clinicName\}\}/g, data.clinicName || 'UPACI Health');
+  template = template.replace(/\{\{patientName\}\}/g, data.patientName);
+  template = template.replace(/\{\{appointmentDate\}\}/g, data.appointmentDate);
+  template = template.replace(/\{\{appointmentTime\}\}/g, data.appointmentTime);
+  template = template.replace(/\{\{appointmentId\}\}/g, data.appointmentId);
+  template = template.replace(/\{\{appointmentType\}\}/g, data.type || 'Consultation');
+  template = template.replace(/\{\{duration\}\}/g, `${data.duration} minutes`);
+  template = template.replace(/\{\{providerName\}\}/g, data.providerName);
+  template = template.replace(/\{\{providerCredentials\}\}/g, data.providerCredentials || 'MD');
+  template = template.replace(/\{\{departmentName\}\}/g, data.departmentName);
+  template = template.replace(/\{\{location\}\}/g, data.location);
+  template = template.replace(/\{\{address\}\}/g, data.address || '123 Medical Center Dr, Healthcare City, HC 12345');
+  template = template.replace(/\{\{preparationInstructions\}\}/g, 
+    data.preparationInstructions ? data.preparationInstructions.join('\n') : '');
+  template = template.replace(/\{\{pdfDownloadLink\}\}/g, data.pdfDownloadUrl || '#');
+  template = template.replace(/\{\{clinicPhone\}\}/g, data.clinicPhone || '(555) 123-4567');
+  template = template.replace(/\{\{clinicEmail\}\}/g, data.clinicEmail || 'appointments@upaci.health');
+  template = template.replace(/\{\{clinicWebsite\}\}/g, data.clinicWebsite || 'https://upaci.health');
+  
+  return template;
+};
+
+/**
+ * Log email send attempt to email_log table
+ * 
+ * @param appointmentId - Appointment ID
+ * @param recipientEmail - Recipient email address
+ * @param subject - Email subject
+ * @param status - Email send status
+ * @param retryCount - Number of retry attempts
+ * @param hasAttachment - Whether email has PDF attachment
+ * @param errorMessage - Error message if failed
+ * @returns Email log ID
+ */
+const logEmailToDatabase = async (
+  appointmentId: string,
+  recipientEmail: string,
+  subject: string,
+  status: EmailStatus,
+  retryCount: number,
+  hasAttachment: boolean,
+  errorMessage?: string
+): Promise<string> => {
+  const query = `
+    INSERT INTO email_log (
+      appointment_id,
+      recipient_email,
+      subject,
+      sent_at,
+      status,
+      retry_count,
+      error_message,
+      has_attachment
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    RETURNING id
+  `;
+  
+  const values = [
+    appointmentId,
+    recipientEmail,
+    subject,
+    new Date(),
+    status,
+    retryCount,
+    errorMessage || null,
+    hasAttachment,
+  ];
+  
+  try {
+    const result = await pool.query(query, values);
+    return result.rows[0].id;
+  } catch (error) {
+    logger.error('Failed to log email to database', { error, appointmentId });
+    throw error;
+  }
+};
+
+/**
+ * Calculate delay for retry attempt using exponential backoff
+ * 
+ * @param retryCount - Current retry attempt (0-indexed)
+ * @param config - Retry configuration
+ * @returns Delay in milliseconds
+ */
+const calculateRetryDelay = (retryCount: number, config: EmailRetryConfig): number => {
+  const delay = config.initialDelay * Math.pow(config.multiplier, retryCount);
+  return Math.min(delay, config.maxDelay);
+};
+
+/**
+ * Send appointment confirmation email with PDF attachment
+ * 
+ * Implements US_018 TASK_003 AC1-AC3:
+ * - AC1: Sends confirmation email with PDF attached
+ * - AC2: Email includes appointment details in text format
+ * - AC3: PDF filename: confirmation_[appointment_id]_[timestamp].pdf
+ * 
+ * Features:
+ * - HTML email template with clinic branding
+ * - Plain text fallback
+ * - PDF attachment from buffer
+ * - Retry logic with exponential backoff (max 2 retries)
+ * - Database logging to email_log table
+ * 
+ * @param appointmentId - Appointment UUID
+ * @param appointmentData - Appointment data for email template
+ * @param pdfBuffer - PDF file as Buffer
+ * @param retryConfig - Optional retry configuration
+ * @returns Email send result with status and log ID
+ * 
+ * @example
+ * const result = await sendAppointmentConfirmationWithPDF(
+ *   'abc-123',
+ *   appointmentData,
+ *   pdfBuffer
+ * );
+ * if (result.success) {
+ *   console.log('Email sent successfully:', result.messageId);
+ * }
+ */
+export const sendAppointmentConfirmationWithPDF = async (
+  appointmentId: string,
+  appointmentData: AppointmentEmailDataV18,
+  pdfBuffer: Buffer,
+  retryConfig: EmailRetryConfig = DEFAULT_RETRY_CONFIG
+): Promise<EmailResult> => {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const pdfFilename = `confirmation_${appointmentId}_${timestamp}.pdf`;
+  const subject = generateAppointmentConfirmationSubject(appointmentData);
+  
+  let retryCount = 0;
+  let lastError: Error | undefined;
+  
+  while (retryCount <= retryConfig.maxRetries) {
+    try {
+      logger.info('Sending appointment confirmation with PDF', {
+        appointmentId,
+        recipientEmail: appointmentData.patientEmail,
+        retryCount,
+      });
+      
+      // Render HTML and text templates
+      const htmlContent = renderHTMLEmailTemplate(appointmentData);
+      const textContent = generateAppointmentConfirmationText(appointmentData);
+      
+      // Send email with PDF attachment
+      const transporter = getTransporter();
+      const mailOptions = {
+        from: `${emailConfig.fromName} <${emailConfig.from}>`,
+        to: appointmentData.patientEmail,
+        subject,
+        html: htmlContent,
+        text: textContent,
+        attachments: [
+          {
+            filename: pdfFilename,
+            content: pdfBuffer,
+            contentType: 'application/pdf',
+            disposition: 'attachment',
+          },
+        ],
+      };
+      
+      const info = await transporter.sendMail(mailOptions);
+      
+      // Log success to database
+      const logId = await logEmailToDatabase(
+        appointmentId,
+        appointmentData.patientEmail,
+        subject,
+        EmailStatus.SENT,
+        retryCount,
+        true, // has attachment
+        undefined
+      );
+      
+      logger.info('Email sent successfully with PDF', {
+        appointmentId,
+        messageId: info.messageId,
+        logId,
+      });
+      
+      return {
+        success: true,
+        messageId: info.messageId,
+        retryCount,
+        sentAt: new Date(),
+        logId,
+      };
+    } catch (error) {
+      lastError = error as Error;
+      logger.error('Failed to send email with PDF', {
+        appointmentId,
+        retryCount,
+        error: lastError.message,
+      });
+      
+      // Check if we should retry
+      if (retryCount < retryConfig.maxRetries) {
+        const delay = calculateRetryDelay(retryCount, retryConfig);
+        logger.warn(
+          `Retrying email send in ${delay}ms (attempt ${retryCount + 1}/${retryConfig.maxRetries})`,
+          { appointmentId }
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        retryCount++;
+      } else {
+        break; // Max retries reached
+      }
+    }
+  }
+  
+  // All retries exhausted - log failure
+  const logId = await logEmailToDatabase(
+    appointmentId,
+    appointmentData.patientEmail,
+    subject,
+    EmailStatus.FAILED,
+    retryCount,
+    true, // attempted with attachment
+    lastError?.message
+  );
+  
+  logger.error('Email send failed after all retries', {
+    appointmentId,
+    retriesAttempted: retryCount,
+    error: lastError?.message,
+    logId,
+  });
+  
+  return {
+    success: false,
+    error: lastError?.message || 'Unknown error',
+    retryCount,
+    sentAt: new Date(),
+    logId,
+  };
+};
+
+/**
+ * Send text-only appointment confirmation email (no PDF attachment)
+ * 
+ * Implements US_018 TASK_003 EC1 (Edge Case 1):
+ * - Fallback when PDF generation fails
+ * - Sends appointment details in text format only
+ * - Includes notice about PDF generation failure
+ * 
+ * Features:
+ * - Plain text email with appointment details
+ * - PDF failure notice message
+ * - Retry logic with exponential backoff (max 2 retries)
+ * - Database logging to email_log table
+ * 
+ * @param appointmentId - Appointment UUID
+ * @param appointmentData - Appointment data for email template
+ * @param pdfFailureReason - Reason for PDF generation failure
+ * @param retryConfig - Optional retry configuration
+ * @returns Email send result with status and log ID
+ * 
+ * @example
+ * const result = await sendAppointmentConfirmationTextOnly(
+ *   'abc-123',
+ *   appointmentData,
+ *   'PDF library error'
+ * );
+ */
+export const sendAppointmentConfirmationTextOnly = async (
+  appointmentId: string,
+  appointmentData: AppointmentEmailDataV18,
+  pdfFailureReason: string,
+  retryConfig: EmailRetryConfig = DEFAULT_RETRY_CONFIG
+): Promise<EmailResult> => {
+  const subject = generateAppointmentConfirmationSubject(appointmentData);
+  
+  let retryCount = 0;
+  let lastError: Error | undefined;
+  
+  while (retryCount <= retryConfig.maxRetries) {
+    try {
+      logger.info('Sending text-only appointment confirmation (PDF failed)', {
+        appointmentId,
+        recipientEmail: appointmentData.patientEmail,
+        pdfFailureReason,
+        retryCount,
+      });
+      
+      // Generate text content with PDF failure notice
+      const textContent = generateTextOnlyFallback(appointmentData);
+      
+      // Send text-only email
+      const transporter = getTransporter();
+      const mailOptions = {
+        from: `${emailConfig.fromName} <${emailConfig.from}>`,
+        to: appointmentData.patientEmail,
+        subject: `${subject} (PDF Unavailable)`,
+        text: textContent,
+      };
+      
+      const info = await transporter.sendMail(mailOptions);
+      
+      // Log success to database
+      const logId = await logEmailToDatabase(
+        appointmentId,
+        appointmentData.patientEmail,
+        subject,
+        EmailStatus.SENT,
+        retryCount,
+        false, // no attachment
+        `PDF generation failed: ${pdfFailureReason}`
+      );
+      
+      logger.info('Text-only email sent successfully', {
+        appointmentId,
+        messageId: info.messageId,
+        logId,
+      });
+      
+      return {
+        success: true,
+        messageId: info.messageId,
+        retryCount,
+        sentAt: new Date(),
+        logId,
+      };
+    } catch (error) {
+      lastError = error as Error;
+      logger.error('Failed to send text-only email', {
+        appointmentId,
+        retryCount,
+        error: lastError.message,
+      });
+      
+      // Check if we should retry
+      if (retryCount < retryConfig.maxRetries) {
+        const delay = calculateRetryDelay(retryCount, retryConfig);
+        logger.warn(
+          `Retrying text-only email send in ${delay}ms (attempt ${retryCount + 1}/${retryConfig.maxRetries})`,
+          { appointmentId }
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        retryCount++;
+      } else {
+        break; // Max retries reached
+      }
+    }
+  }
+  
+  // All retries exhausted - log failure
+  const logId = await logEmailToDatabase(
+    appointmentId,
+    appointmentData.patientEmail,
+    subject,
+    EmailStatus.FAILED,
+    retryCount,
+    false, // no attachment
+    `Email send failed: ${lastError?.message}; PDF generation also failed: ${pdfFailureReason}`
+  );
+  
+  logger.error('Text-only email send failed after all retries', {
+    appointmentId,
+    retriesAttempted: retryCount,
+    error: lastError?.message,
+    logId,
+  });
+  
+  return {
+    success: false,
+    error: lastError?.message || 'Unknown error',
+    retryCount,
+    sentAt: new Date(),
+    logId,
+  };
 };

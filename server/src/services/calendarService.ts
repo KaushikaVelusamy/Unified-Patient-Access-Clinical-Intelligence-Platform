@@ -16,7 +16,7 @@
  * @task US_016 TASK_003 - Calendar ICS Generation
  */
 
-import ical, { ICalCalendar, ICalEventData } from 'ical-generator';
+import ical, { ICalCalendar, ICalEventData, ICalEventStatus, ICalAttendeeStatus, ICalEventBusyStatus } from 'ical-generator';
 import { writeFile, unlink } from 'fs/promises';
 import { join } from 'path';
 import logger from '../utils/logger';
@@ -157,14 +157,14 @@ function addAppointmentEvent(calendar: ICalCalendar, appointment: AppointmentEve
 
   // Event data
   const eventData: ICalEventData = {
+    id: `appointment-${id}`,
     start: appointmentDate,
     end: endDate,
     summary: `Appointment with ${providerName}`,
     description,
     location,
-    uid: `appointment-${id}@${CLINIC_ORG.url.replace(/^https?:\/\//, '')}`,
-    status: 'CONFIRMED',
-    busyStatus: 'BUSY',
+    status: ICalEventStatus.CONFIRMED,
+    busystatus: ICalEventBusyStatus.BUSY,
     organizer: {
       name: CLINIC_ORG.name,
       email: CLINIC_ORG.email,
@@ -174,7 +174,7 @@ function addAppointmentEvent(calendar: ICalCalendar, appointment: AppointmentEve
         name: patientName,
         email: patientEmail,
         rsvp: true,
-        status: 'NEEDS-ACTION',
+        status: ICalAttendeeStatus.NEEDSACTION,
         role: 'REQ-PARTICIPANT' as any,
       },
     ],

@@ -156,11 +156,11 @@ server/
 - [x] Audit logging validation: Verify all operations logged to audit table
 
 ## Implementation Checklist
-- [ ] Create pdfController.ts with generatePDF() handler (query appointment + patient data, call pdfService, storageService, emailService, return downloadUrl on success)
-- [ ] Implement error handling with retry logic in generatePDF() (try-catch, retry once on failure, fallback to text-only email, return appropriate error response)
-- [ ] Create downloadPDF() handler (validate token, check file exists, stream PDF with Content-Type application/pdf)
-- [ ] Create pdfRoutes.ts with POST /api/appointments/:id/generate-pdf and GET /api/pdfs/download routes with authentication middleware
-- [ ] Create validatePDFRequest.ts middleware (validate appointment_id exists in database, check user has permission to access appointment)
-- [ ] Modify routes/index.ts to import and register pdfRoutes
-- [ ] Modify app.ts to add PDF routes to Express middleware stack
-- [ ] Add audit logging for all PDF operations (generation attempts, downloads, failures) with metadata (appointment_id, user_id, timestamp, status, error_message)
+- [x] Create pdfController.ts with generatePDF() handler (query appointment + patient data, call pdfService, storageService, emailService, return downloadUrl on success)
+- [x] Implement error handling with retry logic in generatePDF() (try-catch, retry once on failure, fallback to text-only email, return appropriate error response)
+- [x] Create downloadPDF() handler (validate token, check file exists, stream PDF with Content-Type application/pdf)
+- [x] Create pdfRoutes.ts with POST /api/appointments/:id/generate-pdf and GET /api/pdfs/download routes with authentication middleware
+- [x] Create validatePDFRequest.ts middleware (validate appointment_id exists in database, check user has permission to access appointment)
+- [x] Modify routes/index.ts to import and register pdfRoutes
+- [x] Modify app.ts to add PDF routes to Express middleware stack
+- [x] Add audit logging for all PDF operations (generation attempts, downloads, failures) with metadata (appointment_id, user_id, timestamp, status, error_message)

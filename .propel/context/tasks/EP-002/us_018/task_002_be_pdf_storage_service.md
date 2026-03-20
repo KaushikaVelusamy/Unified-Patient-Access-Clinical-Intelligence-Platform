@@ -141,11 +141,11 @@ database/
 - [x] Concurrent access test: multiple PDF saves simultaneously, verify no file conflicts
 
 ## Implementation Checklist
-- [ ] Create V008__create_pdf_metadata_table.sql migration with pdf_metadata table (id, appointment_id FK, file_path, file_size_bytes, generated_at, expires_at, created_by, created_at)
-- [ ] Run database migration to create pdf_metadata table
-- [ ] Create storage.types.ts with PDFStorageOptions, PDFMetadata, SecureDownloadURL, CleanupResult interfaces
-- [ ] Create storageService.ts with savePDF() function (save buffer to filesystem with year-month subdirectory, insert metadata to database, return file_path)
-- [ ] Implement generateSecureDownloadURL() function (create JWT with 7-day expiry, return /api/pdfs/download?token=<jwt>)
-- [ ] Implement validateDownloadToken() function (verify JWT, check file exists, return file_path or throw error)
-- [ ] Implement getPDFMetadata() and deletePDF() functions for metadata management
-- [ ] Create pdfCleanupJob.ts with node-cron scheduled for daily 2 AM UTC (query PDFs where expires_at < NOW() - 30 days, delete files and DB records, log summary)
+- [x] Create V008__create_pdf_metadata_table.sql migration with pdf_metadata table (id, appointment_id FK, file_path, file_size_bytes, generated_at, expires_at, created_by, created_at)
+- [x] Run database migration to create pdf_metadata table
+- [x] Create storage.types.ts with PDFStorageOptions, PDFMetadata, SecureDownloadURL, CleanupResult interfaces
+- [x] Create storageService.ts with savePDF() function (save buffer to filesystem with year-month subdirectory, insert metadata to database, return file_path)
+- [x] Implement generateSecureDownloadURL() function (create JWT with 7-day expiry, return /api/pdfs/download?token=<jwt>)
+- [x] Implement validateDownloadToken() function (verify JWT, check file exists, return file_path or throw error)
+- [x] Implement getPDFMetadata() and deletePDF() functions for metadata management
+- [x] Create pdfCleanupJob.ts with node-cron scheduled for daily 2 AM UTC (query PDFs where expires_at < NOW() - 30 days, delete files and DB records, log summary)

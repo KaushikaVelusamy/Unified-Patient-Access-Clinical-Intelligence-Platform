@@ -328,8 +328,6 @@ import { AppointmentConfirmationTemplate } from '../templates/appointmentConfirm
 import type {
   AppointmentConfirmationPDFData,
   PDFGenerationResult,
-  PatientPDFData,
-  AppointmentPDFData,
   ClinicBrandingData,
   PDFGenerationOptions,
 } from '../types/pdf.types';

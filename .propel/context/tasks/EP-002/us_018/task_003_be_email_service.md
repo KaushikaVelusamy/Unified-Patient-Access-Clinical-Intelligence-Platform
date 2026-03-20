@@ -149,11 +149,11 @@ database/
 - [x] Error handling validation: test with invalid SMTP credentials, invalid recipient email, verify error logging
 
 ## Implementation Checklist
-- [ ] Create V009__create_email_log_table.sql migration with email_log table (id, appointment_id FK, recipient_email, subject, sent_at, status, retry_count, error_message, has_attachment, created_at)
-- [ ] Run database migration to create email_log table
-- [ ] Install nodemailer@6.x and @types/nodemailer dependencies
-- [ ] Create email.types.ts with EmailOptions, EmailAttachment, EmailResult, EmailStatus, EmailLogEntry interfaces
-- [ ] Add SMTP configuration to env.ts (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, EMAIL_FROM) and .env.example
-- [ ] Create appointmentConfirmation.html HTML email template with inline CSS, appointment details table, PDF download link
-- [ ] Create appointmentConfirmation.text.ts plain text email template function
-- [ ] Create emailService.ts with sendEmail() base function (create SMTP transport, send email, log to database, return EmailResult)
+- [x] Create V009__create_email_log_table.sql migration with email_log table (id, appointment_id FK, recipient_email, subject, sent_at, status, retry_count, error_message, has_attachment, created_at)
+- [x] Run database migration to create email_log table
+- [x] Install nodemailer@6.x and @types/nodemailer dependencies
+- [x] Create email.types.ts with EmailOptions, EmailAttachment, EmailResult, EmailStatus, EmailLogEntry interfaces
+- [x] Add SMTP configuration to env.ts (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, EMAIL_FROM) and .env.example
+- [x] Create appointmentConfirmation.html HTML email template with inline CSS, appointment details table, PDF download link
+- [x] Create appointmentConfirmation.text.ts plain text email template function
+- [x] Create emailService.ts with sendEmail() base function (create SMTP transport, send email, log to database, return EmailResult)

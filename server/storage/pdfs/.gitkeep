@@ -1,0 +1,40 @@
+# PDF Storage Directory
+
+This directory stores appointment confirmation PDFs organized by year-month subdirectories.
+
+## Directory Structure
+
+```
+pdfs/
+├── 2026-03/
+│   ├── confirmation_abc123_1711098765432.pdf
+│   └── confirmation_def456_1711098765433.pdf
+├── 2026-04/
+│   └── ...
+└── .gitkeep (this file)
+```
+
+## Naming Convention
+
+Files follow the format: `confirmation_[appointment_id]_[timestamp].pdf`
+
+- **appointment_id**: UUID of the appointment
+- **timestamp**: Unix timestamp in milliseconds when PDF was generated
+
+## Retention Policy
+
+- PDFs are automatically deleted after 30 days from generation date
+- Cleanup job runs daily at 2 AM UTC
+- Patients can regenerate PDFs from appointment history if needed
+
+## Security
+
+- Direct filesystem access is restricted
+- Access is only via secure download URLs with JWT tokens
+- Download URLs expire after 7 days
+
+## Storage Management
+
+- Subdirectories organized by year-month to avoid filesystem limits
+- Each subdirectory can handle ~10,000 files efficiently
+- Total storage monitored via pdf_metadata table

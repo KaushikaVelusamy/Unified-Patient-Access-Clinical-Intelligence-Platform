@@ -4,6 +4,7 @@ import appointmentsRoutes from './appointments.routes';
 import patientsRoutes from './patients.routes';
 import adminRoutes from './admin.routes';
 import calendarRoutes from './calendar.routes';
+import pdfRoutes from './pdfRoutes';
 
 const router = Router();
 
@@ -45,5 +46,6 @@ router.use('/appointments', appointmentsRoutes);
 router.use('/patients', patientsRoutes);
 router.use('/admin', adminRoutes);
 router.use('/calendar', calendarRoutes);
+router.use('/', pdfRoutes); // PDF routes at root level for /api/pdfs/download
 
 export default router;

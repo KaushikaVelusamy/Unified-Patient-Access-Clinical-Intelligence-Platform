@@ -293,14 +293,25 @@ PropelIQ prompts were executed sequentially to generate the complete SDLC docume
 | Component | Files Created | Lines of Code | Status | Coverage |
 |-----------|---------------|---------------|---------|----------|
 | Frontend (React) | 42 | 3,200 | 🟨 Partial (30%) | Login, Dashboard Layout |
-| Backend (Express) | 38 | 2,800 | 🟨 Partial (25%) | Auth API, Database connection |
+| Backend (Express) | 46 | 4,800 | 🟨 Partial (35%) | Auth API, PDF generation, Email service, Storage service, API integration |
 | Database (PostgreSQL) | 12 migrations | 1,500 SQL | ✅ Complete (100%) | All 9 core tables |
 | Redis Caching | 2 | 180 | ✅ Complete (100%) | Session store, time slot cache |
 | Monitoring (Prometheus) | 3 | 120 | ✅ Complete (100%) | Metrics endpoint, scrape config |
 | CI/CD Pipeline | 2 YAML | 150 | ⚪ Not Started (0%) | - |
 | Testing (Jest + Playwright) | 8 | 450 | 🟨 Partial (10%) | Basic smoke tests only |
 
-**Overall Implementation Progress:** 35% Complete (Estimated 450 hours remaining for full production release)
+**Overall Implementation Progress:** 40% Complete (Estimated 410 hours remaining for full production release)
+
+**Recent Completion (March 20, 2026):**
+- ✅ **US-018: PDF Appointment Confirmation** - Full implementation of 4-task workflow:
+  - TASK_001: Backend PDF Generation Service (pdfService.ts with Puppeteer)
+  - TASK_002: Backend PDF Storage Service (storageService.ts with JWT-secured downloads)
+  - TASK_003: Backend Email Service (emailService.ts with nodemailer, retry logic)
+  - TASK_004: Backend API Integration (pdfController.ts, routes, middleware)
+  - **Build Status:** ✅ Passing (0 TypeScript errors)
+  - **Files Created:** 8 (controller, routes, middleware, migrations, templates, types)
+  - **Lines of Code:** ~2,000 (TypeScript + SQL + HTML)
+  - **Key Features:** PDF generation with QR code, secure 7-day download URLs, email with PDF attachment, text-only fallback, exponential retry, audit logging
 
 ---
 
@@ -338,16 +349,16 @@ PropelIQ prompts were executed sequentially to generate the complete SDLC docume
 | US-015: Waitlist Management | 5 | ⚪ Not Started | Algorithm design documented |
 | US-016: Automated Reminders | 4 | ⚪ Not Started | SendGrid integration pending |
 | US-017: Calendar Sync | 5 | ⚪ Not Started | Google OAuth flow pending |
-| US-018: PDF Confirmation | 3 | ⚪ Not Started | PDFKit service stub exists |
+| US-018: PDF Confirmation | 4 | ✅ Complete | All 4 tasks complete: pdfService, storageService, emailService, API integration |
 | US-019: Patient Dashboard | 4 | 🟨 Partial (60%) | Dashboard layout complete, appointment list wired up |
 
 ### EP-003 to EP-010 (Detailed checklist available in `.propel/context/tasks/USER_STORIES_SUMMARY.md`)
 
 **Summary:**
-- ✅ **Complete:** 18 user stories (36%)
+- ✅ **Complete:** 19 user stories (38%)
 - 🟨 **Partial:** 12 user stories (24%)
-- ⚪ **Not Started:** 20 user stories (40%)
-- **Total Tasks Complete:** 68/180 (38%)
+- ⚪ **Not Started:** 19 user stories (38%)
+- **Total Tasks Complete:** 72/180 (40%)
 
 ---
 

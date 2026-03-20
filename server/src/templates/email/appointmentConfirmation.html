@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Appointment Confirmation</title>
+    <!--[if mso]>
+    <style type="text/css">
+        body, table, td {font-family: Arial, sans-serif !important;}
+    </style>
+    <![endif]-->
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; background-color: #f4f4f4;">
+    <!-- Main container -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f4f4f4;">
+        <tr>
+            <td style="padding: 20px 0;">
+                <!-- Content container -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" align="center" style="margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td style="background-color: #2563eb; padding: 30px 40px; border-radius: 8px 8px 0 0;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold; text-align: center;">
+                                {{clinicName}}
+                            </h1>
+                            <p style="margin: 10px 0 0; color: #ffffff; font-size: 14px; text-align: center; opacity: 0.9;">
+                                Appointment Confirmation
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Body -->
+                    <tr>
+                        <td style="padding: 40px;">
+                            <!-- Greeting -->
+                            <p style="margin: 0 0 20px; font-size: 16px; color: #333333; line-height: 1.5;">
+                                Dear <strong>{{patientName}}</strong>,
+                            </p>
+                            
+                            <p style="margin: 0 0 30px; font-size: 16px; color: #333333; line-height: 1.5;">
+                                Your appointment has been confirmed. Please find the details below:
+                            </p>
+                            
+                            <!-- Appointment Details Box -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 30px;">
+                                <tr>
+                                    <td style="padding: 25px;">
+                                        <!-- Date & Time (Highlighted) -->
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #eff6ff; border: 1px solid #3b82f6; border-radius: 6px; margin-bottom: 20px;">
+                                            <tr>
+                                                <td style="padding: 15px; text-align: center;">
+                                                    <p style="margin: 0 0 5px; font-size: 18px; font-weight: bold; color: #1e40af;">
+                                                        {{appointmentDate}}
+                                                    </p>
+                                                    <p style="margin: 0; font-size: 16px; font-weight: bold; color: #2563eb;">
+                                                        {{appointmentTime}}
+                                                    </p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        
+                                        <!-- Other Details -->
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                            <tr>
+                                                <td style="padding: 8px 0; font-size: 14px; color: #64748b; width: 40%;">
+                                                    Appointment ID:
+                                                </td>
+                                                <td style="padding: 8px 0; font-size: 14px; color: #1e293b; font-weight: 600;">
+                                                    {{appointmentId}}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0; font-size: 14px; color: #64748b;">
+                                                    Type:
+                                                </td>
+                                                <td style="padding: 8px 0; font-size: 14px; color: #1e293b; font-weight: 600;">
+                                                    {{appointmentType}}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0; font-size: 14px; color: #64748b;">
+                                                    Duration:
+                                                </td>
+                                                <td style="padding: 8px 0; font-size: 14px; color: #1e293b; font-weight: 600;">
+                                                    {{duration}} minutes
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0; font-size: 14px; color: #64748b;">
+                                                    Provider:
+                                                </td>
+                                                <td style="padding: 8px 0; font-size: 14px; color: #1e293b; font-weight: 600;">
+                                                    {{providerName}}{{providerCredentials}}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0; font-size: 14px; color: #64748b;">
+                                                    Department:
+                                                </td>
+                                                <td style="padding: 8px 0; font-size: 14px; color: #1e293b; font-weight: 600;">
+                                                    {{departmentName}}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0; font-size: 14px; color: #64748b;">
+                                                    Location:
+                                                </td>
+                                                <td style="padding: 8px 0; font-size: 14px; color: #1e293b; font-weight: 600;">
+                                                    {{location}}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 8px 0; font-size: 14px; color: #64748b; vertical-align: top;">
+                                                    Address:
+                                                </td>
+                                                <td style="padding: 8px 0; font-size: 14px; color: #1e293b; font-weight: 600;">
+                                                    {{address}}
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Preparation Instructions (if provided) -->
+                            {{preparationInstructions}}
+                            
+                            <!-- PDF Download Link (if provided) -->
+                            {{pdfDownloadLink}}
+                            
+                            <!-- Important Notes -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; margin-bottom: 30px;">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <p style="margin: 0 0 10px; font-size: 14px; font-weight: bold; color: #92400e;">
+                                            📋 Important Notes:
+                                        </p>
+                                        <ul style="margin: 0; padding-left: 20px; font-size: 14px; color: #92400e; line-height: 1.6;">
+                                            <li>Please arrive 15 minutes before your appointment</li>
+                                            <li>Bring a valid photo ID and your insurance card</li>
+                                            <li>If you need to cancel or reschedule, please provide at least 24 hours notice</li>
+                                        </ul>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Contact Information -->
+                            <p style="margin: 0 0 10px; font-size: 14px; color: #333333; line-height: 1.5;">
+                                If you have any questions or need to make changes to your appointment, please contact us:
+                            </p>
+                            <p style="margin: 0 0 20px; font-size: 14px; color: #2563eb; line-height: 1.5;">
+                                📞 <strong>{{clinicPhone}}</strong><br>
+                                ✉️ <strong>{{clinicEmail}}</strong>{{clinicWebsite}}
+                            </p>
+                            
+                            <p style="margin: 0; font-size: 16px; color: #333333; line-height: 1.5;">
+                                We look forward to seeing you!
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f8fafc; padding: 30px 40px; border-top: 1px solid #e5e7eb; border-radius: 0 0 8px 8px;">
+                            <p style="margin: 0 0 15px; font-size: 12px; color: #64748b; text-align: center; line-height: 1.5;">
+                                This is an automated message. Please do not reply to this email.
+                            </p>
+                            <p style="margin: 0; font-size: 11px; color: #ef4444; font-weight: bold; text-align: center;">
+                                ⚠️ Protected Health Information - Handle Securely per HIPAA
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

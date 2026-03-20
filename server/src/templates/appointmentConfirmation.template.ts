@@ -17,7 +17,6 @@ import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
 import { AppointmentConfirmationPDFData } from '../types/pdf.types';
 import fs from 'fs';
-import path from 'path';
 import logger from '../utils/logger';
 
 /**
