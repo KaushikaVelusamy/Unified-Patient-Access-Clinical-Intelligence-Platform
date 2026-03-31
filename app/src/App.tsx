@@ -22,6 +22,7 @@ import { PatientDashboard } from './pages/PatientDashboard';
 import { StaffDashboard } from './pages/StaffDashboard';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { AppointmentBookingPage } from './pages/AppointmentBookingPage';
+import { QueueManagementPage } from './pages/QueueManagementPage';
 import './App.css';
 
 // Create a client for React Query
@@ -73,6 +74,26 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['staff', 'admin']}>
                     <StaffDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              
+              {/* Protected Routes - Doctor */}
+              <Route
+                path="/doctor/dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={['doctor', 'admin']}>
+                    <StaffDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              
+              {/* Protected Routes - Staff Queue Management */}
+              <Route
+                path="/staff/queue"
+                element={
+                  <ProtectedRoute allowedRoles={['staff', 'admin']}>
+                    <QueueManagementPage />
                   </ProtectedRoute>
                 }
               />
