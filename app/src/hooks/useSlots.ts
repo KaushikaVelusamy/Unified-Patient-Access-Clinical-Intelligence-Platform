@@ -79,14 +79,9 @@ export const useSlots = (filters?: SlotFilters): UseQueryResult<Slot[], Error> =
 export const useAvailableDates = (filters?: SlotFilters): UseQueryResult<string[], Error> => {
   return useQuery({
     queryKey: slotsKeys.availableDates(filters),
-    queryFn: async () => {
-      try {
-        return await getAvailableDates(filters);
-      } catch {
-        // Return empty array on failure so calendar still renders
-        return [];
-      }
-    },
+    queryFn: () => getAvailableDates(filters),
+    // Keep the calendar renderable while loading/refetching without masking failures
+    placeholderData: [],
     // Cache for 10 minutes (dates change less frequently)
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: true,

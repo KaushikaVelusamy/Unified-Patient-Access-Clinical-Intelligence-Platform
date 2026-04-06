@@ -124,13 +124,13 @@ function getQuickActions(userId?: string | number): QuickAction[] {
       path: '/appointments/book',
       ariaLabel: 'Book a new appointment',
     },
-    {
+    ...(userId ? [{
       id: 'upload-documents',
       label: 'Upload Documents',
       icon: <UploadIcon />,
-      path: `/documents/upload/${userId || 'me'}`,
+      path: `/documents/upload/${userId}`,
       ariaLabel: 'Upload medical documents',
-    },
+    }] : []),
     {
       id: 'complete-intake',
       label: 'AI Intake',

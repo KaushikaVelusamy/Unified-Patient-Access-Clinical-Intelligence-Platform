@@ -26,10 +26,20 @@ export const DeactivateUserDialog: React.FC<DeactivateUserDialogProps> = ({
   onCancel,
   submitting,
 }) => {
+  const overlayRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      overlayRef.current?.focus();
+    }
+  }, [isOpen]);
+
   if (!isOpen || !user) return null;
 
   return (
     <div
+      ref={overlayRef}
+      tabIndex={-1}
       style={{
         position: 'fixed',
         inset: 0,

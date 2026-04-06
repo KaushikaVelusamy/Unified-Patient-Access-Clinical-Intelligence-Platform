@@ -27,11 +27,19 @@ export const RiskFactorsPopover: React.FC<RiskFactorsPopoverProps> = ({
   onClose,
 }) => {
   const color = categoryColors[riskAssessment.category];
+  const dialogRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    dialogRef.current?.focus();
+  }, []);
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
+      aria-modal="true"
       aria-labelledby="risk-popover-title"
+      tabIndex={-1}
       style={{
         position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
