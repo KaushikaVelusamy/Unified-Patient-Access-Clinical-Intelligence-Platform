@@ -124,6 +124,38 @@ export const cacheMisses = new Counter({
 });
 
 /**
+ * Active Database Connections Gauge
+ * Tracks pool utilisation reported by pg Pool.
+ */
+export const activeDatabaseConnectionsGauge = new Gauge({
+  name: 'active_database_connections',
+  help: 'Number of active database connections in the pool',
+  registers: [register],
+});
+
+/**
+ * Circuit Breaker State Gauge
+ * 0 = closed (healthy), 1 = open (failing), 2 = half-open (probing).
+ */
+export const circuitBreakerStateGauge = new Gauge({
+  name: 'circuit_breaker_state',
+  help: 'Circuit breaker state (0=closed, 1=open, 2=half-open)',
+  labelNames: ['service'],
+  registers: [register],
+});
+
+/**
+ * AI API Batch Size Histogram
+ * Tracks the number of items processed per AI batch request.
+ */
+export const aiApiBatchSizeHistogram = new Histogram({
+  name: 'ai_api_batch_size',
+  help: 'Number of items in AI API batch requests',
+  buckets: [1, 5, 10, 20, 50],
+  registers: [register],
+});
+
+/**
  * Initialize metrics registry
  * Validates configuration and logs initialization status
  */
@@ -171,6 +203,9 @@ export default {
   dbQueryDuration,
   cacheHits,
   cacheMisses,
+  activeDatabaseConnectionsGauge,
+  circuitBreakerStateGauge,
+  aiApiBatchSizeHistogram,
   initializeMetrics,
   getMetrics,
   getContentType,

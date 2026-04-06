@@ -13,9 +13,9 @@ export const dbConfig: DbConfig = {
   user: config.database.user,
   password: config.database.password,
   ssl: config.database.ssl,
-  max: config.database.maxConnections,
+  max: config.database.maxConnections || 50,
   connectionTimeoutMillis: 5000, // 5 seconds
-  idleTimeoutMillis: 10000, // 10 seconds
+  idleTimeoutMillis: 30000, // 30 seconds – keep idle connections longer to reduce churn
 };
 
 /**
