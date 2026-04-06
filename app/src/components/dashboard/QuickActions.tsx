@@ -113,7 +113,7 @@ interface QuickAction {
 }
 
 /**
- * Build quick actions based on user role and ID
+ * Build quick actions based on user ID
  */
 function getQuickActions(userId?: string | number): QuickAction[] {
   return [

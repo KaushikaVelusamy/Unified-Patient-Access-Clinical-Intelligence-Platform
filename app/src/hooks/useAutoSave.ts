@@ -32,6 +32,15 @@ export function useAutoSave(
   const [saveError, setSaveError] = useState<string | null>(null);
   const prevDataRef = useRef<string>('');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const saveDraftRef = useRef<() => Promise<void>>();
+
+  // Reset state when patientId changes
+  useEffect(() => {
+    setDraftId(null);
+    setLastSavedAt(null);
+    setSaveError(null);
+    prevDataRef.current = '';
+  }, [patientId]);
 
   const saveDraft = useCallback(async () => {
     if (!patientId) return;
@@ -82,15 +91,20 @@ export function useAutoSave(
     }
   }, [patientId, draftData, draftId, appointmentId]);
 
-  // Auto-save interval
+  // Keep saveDraftRef current without re-creating the interval
+  saveDraftRef.current = saveDraft;
+
+  // Auto-save interval — stable, does not reset on every keystroke
   useEffect(() => {
     if (!patientId) return;
 
-    intervalRef.current = setInterval(saveDraft, AUTO_SAVE_INTERVAL_MS);
+    intervalRef.current = setInterval(() => {
+      saveDraftRef.current?.();
+    }, AUTO_SAVE_INTERVAL_MS);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [patientId, saveDraft]);
+  }, [patientId]);
 
   return {
     draftId,

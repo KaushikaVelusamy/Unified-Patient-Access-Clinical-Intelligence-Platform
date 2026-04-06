@@ -27,10 +27,19 @@ import type {
 } from '../types/queue.types';
 import { getToken } from '../utils/storage/tokenStorage';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 /** Query key for queue data */
 const QUEUE_QUERY_KEY = ['staff', 'queue', 'today'] as const;
+
+const VALID_QUEUE_STATUSES: QueueStatus[] = ['scheduled', 'arrived', 'in_progress', 'completed', 'no_show'];
+
+/** Safely map a raw status string to a valid QueueStatus */
+function toQueueStatus(raw: string): QueueStatus {
+  if (raw === 'confirmed') return 'scheduled';
+  if (VALID_QUEUE_STATUSES.includes(raw as QueueStatus)) return raw as QueueStatus;
+  return 'scheduled';
+}
 
 /** Status sort order for sorting by status column */
 const STATUS_SORT_ORDER: Record<string, number> = {
@@ -51,7 +60,7 @@ const mapAppointment = (raw: Record<string, unknown>): QueueAppointment => ({
   patientId: String(raw.patient_id ?? ''),
   patientName: String(raw.patient_name ?? '').trim() || 'Unknown Patient',
   appointmentTime: String(raw.appointment_time ?? raw.appointment_date ?? ''),
-  status: (String(raw.status ?? 'scheduled') === 'confirmed' ? 'scheduled' : String(raw.status ?? 'scheduled')) as QueueStatus,
+  status: toQueueStatus(String(raw.status ?? 'scheduled')),
   providerName: String(raw.provider_name ?? ''),
   providerId: String(raw.provider_id ?? raw.doctor_id ?? ''),
   department: String(raw.department_name ?? ''),

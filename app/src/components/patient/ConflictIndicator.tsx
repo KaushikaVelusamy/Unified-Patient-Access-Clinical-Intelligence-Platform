@@ -21,10 +21,12 @@ export const ConflictIndicator: React.FC<ConflictIndicatorProps> = ({
   if (totalCount === 0) return null;
 
   const isUrgent = pendingCount > 0;
+  const Tag = onClick ? 'button' : 'span';
 
   return (
-    <button
+    <Tag
       onClick={onClick}
+      aria-label={pendingCount > 0 ? `${pendingCount} conflicts pending` : `${totalCount} conflicts resolved`}
       style={{
         display: 'inline-flex',
         alignItems: 'center',
@@ -43,6 +45,6 @@ export const ConflictIndicator: React.FC<ConflictIndicatorProps> = ({
       {pendingCount > 0
         ? `${pendingCount} conflict${pendingCount > 1 ? 's' : ''} pending`
         : `${totalCount} conflict${totalCount > 1 ? 's' : ''} resolved`}
-    </button>
+    </Tag>
   );
 };

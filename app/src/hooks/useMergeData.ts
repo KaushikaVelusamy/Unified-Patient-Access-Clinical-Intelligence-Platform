@@ -27,30 +27,22 @@ export function useMergeData(patientId: number | null) {
 
   const fetchMergeHistory = useCallback(async () => {
     if (!patientId) return;
-    try {
-      const token = getToken();
-      const response = await axios.get<{ success: boolean; data: MergeLogEntry[] }>(
-        `${API_URL}/patients/${patientId}/merge-history`,
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-      setMergeHistory(response.data.data || []);
-    } catch {
-      // Silent fail
-    }
+    const token = getToken();
+    const response = await axios.get<{ success: boolean; data: MergeLogEntry[] }>(
+      `${API_URL}/patients/${patientId}/merge-history`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    setMergeHistory(response.data.data || []);
   }, [patientId]);
 
   const fetchConflicts = useCallback(async () => {
     if (!patientId) return;
-    try {
-      const token = getToken();
-      const response = await axios.get<{ success: boolean; data: FieldConflict[] }>(
-        `${API_URL}/patients/${patientId}/conflicts`,
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-      setConflicts(response.data.data || []);
-    } catch {
-      // Silent fail
-    }
+    const token = getToken();
+    const response = await axios.get<{ success: boolean; data: FieldConflict[] }>(
+      `${API_URL}/patients/${patientId}/conflicts`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    setConflicts(response.data.data || []);
   }, [patientId]);
 
   const resolveConflict = useCallback(async (
@@ -82,7 +74,21 @@ export function useMergeData(patientId: number | null) {
   useEffect(() => {
     if (patientId) {
       setLoading(true);
+      setError(null);
       Promise.all([fetchMergeHistory(), fetchConflicts()])
+        .then(async () => {
+          // Fetch merge status after history and conflicts
+          try {
+            const token = getToken();
+            const response = await axios.get<{ success: boolean; data: MergeStatusInfo }>(
+              `${API_URL}/patients/${patientId}/merge-status`,
+              { headers: { Authorization: `Bearer ${token}` } },
+            );
+            setMergeStatus(response.data.data || null);
+          } catch {
+            // Merge status endpoint may not exist yet
+          }
+        })
         .catch((err) => setError(err instanceof Error ? err.message : 'Failed to fetch merge data'))
         .finally(() => setLoading(false));
     }

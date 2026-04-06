@@ -38,6 +38,7 @@ export const ClinicalTabNavigation: React.FC<ClinicalTabNavigationProps> = ({ ac
         return (
           <button
             key={tab.id}
+            id={`clinical-tab-${tab.id}`}
             role="tab"
             aria-selected={isActive}
             aria-controls={`clinical-panel-${tab.id}`}
