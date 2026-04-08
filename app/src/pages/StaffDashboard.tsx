@@ -7,22 +7,56 @@
  * - Access patient records
  * - Update appointment status
  * 
- * This is a placeholder component - full implementation in future tasks.
- * 
  * @module StaffDashboard
  * @created 2026-03-18
  * @task US_012 TASK_003
  */
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import './Dashboard.css';
+
+interface NavCard {
+  title: string;
+  description: string;
+  path: string;
+  icon: string;
+}
+
+const STAFF_NAV_CARDS: NavCard[] = [
+  {
+    title: 'Patient Queue',
+    description: 'View and manage the patient queue, update status, and assign providers.',
+    path: '/staff/queue',
+    icon: '👥',
+  },
+  {
+    title: 'Book Appointment',
+    description: 'Schedule appointments on behalf of patients.',
+    path: '/staff/appointments/book',
+    icon: '📅',
+  },
+  {
+    title: 'AI Intake',
+    description: 'AI-assisted patient intake with smart form filling.',
+    path: '/intake/ai',
+    icon: '🤖',
+  },
+  {
+    title: 'Manual Intake',
+    description: 'Manually enter patient intake data.',
+    path: '/intake/manual',
+    icon: '📋',
+  },
+];
 
 /**
  * Staff Dashboard Component
  */
 export const StaffDashboard: React.FC = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <div className="dashboard">
@@ -41,26 +75,23 @@ export const StaffDashboard: React.FC = () => {
 
       <main className="dashboard__content">
         <section className="dashboard__welcome">
-          <h2>✅ Authentication Successful</h2>
-          <p>Welcome to the Staff Dashboard!</p>
-          <p className="dashboard__user-details">
-            <strong>Email:</strong> {user?.email}<br />
-            <strong>Role:</strong> {user?.role}<br />
-            <strong>ID:</strong> {user?.id}
-          </p>
+          <h2>Welcome, {user?.name || user?.email}</h2>
+          <p>Select a workflow to get started.</p>
         </section>
 
-        <section className="dashboard__placeholder">
-          <h3>Upcoming Features</h3>
-          <ul>
-            <li>👥 View patient queue</li>
-            <li>📋 Manage appointments</li>
-            <li>📄 Access patient records</li>
-            <li>✅ Update appointment status</li>
-            <li>📊 View daily schedule</li>
-            <li>💬 Patient communication</li>
-          </ul>
-          <p><em>This is a placeholder dashboard. Full implementation coming in future tasks.</em></p>
+        <section className="dashboard__nav-grid" aria-label="Staff workflows">
+          {STAFF_NAV_CARDS.map((card) => (
+            <button
+              key={card.path}
+              className="dashboard__nav-card"
+              onClick={() => navigate(card.path)}
+              type="button"
+            >
+              <span className="dashboard__nav-card-icon" aria-hidden="true">{card.icon}</span>
+              <h3 className="dashboard__nav-card-title">{card.title}</h3>
+              <p className="dashboard__nav-card-desc">{card.description}</p>
+            </button>
+          ))}
         </section>
       </main>
     </div>

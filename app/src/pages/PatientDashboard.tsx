@@ -14,9 +14,10 @@
  * @task US_012 TASK_003, US_013 TASK_006, US_014 TASK_001, US_019 TASK_001, US_019 TASK_003
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppointments } from '../context/AppointmentContext';
+import { cancelAppointment } from '../services/appointmentService';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { AppointmentCard } from '../components/dashboard/AppointmentCard';
 import { WaitlistSection } from '../components/waitlist/WaitlistSection';
@@ -33,15 +34,23 @@ import './Dashboard.css';
 export const PatientDashboard: React.FC = () => {
   const { appointments, loading, error, refreshAppointments } = useAppointments();
   const navigate = useNavigate();
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   /**
    * Handle cancel appointment
    */
-  const handleCancel = (appointmentId: string) => {
-    // TODO: Implement cancel logic with confirmation
-    if (confirm('Are you sure you want to cancel this appointment?')) {
-      // API call to cancel
-      alert(`Cancel appointment ${appointmentId} - Feature coming soon!`);
+  const handleCancel = async (appointmentId: string) => {
+    if (!confirm('Are you sure you want to cancel this appointment?')) {
+      return;
+    }
+    setCancellingId(appointmentId);
+    try {
+      await cancelAppointment(appointmentId, 'Cancelled by patient');
+      await refreshAppointments();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to cancel appointment');
+    } finally {
+      setCancellingId(null);
     }
   };
 

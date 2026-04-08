@@ -217,7 +217,21 @@ export const AppointmentBookingPage: React.FC = () => {
   return (
     <div className="booking-page">
       <div className="booking-page-header">
-        <h1>Book an Appointment</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '4px' }}>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            aria-label="Go back"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '6px',
+              padding: '8px 16px', border: '1px solid #d1d5db', borderRadius: '6px',
+              background: '#fff', cursor: 'pointer', fontSize: '14px', color: '#374151',
+            }}
+          >
+            &#8592; Back
+          </button>
+          <h1 style={{ margin: 0 }}>Book an Appointment</h1>
+        </div>
         <p className="header-subtitle">
           Select a date, time, and provider for your appointment
         </p>

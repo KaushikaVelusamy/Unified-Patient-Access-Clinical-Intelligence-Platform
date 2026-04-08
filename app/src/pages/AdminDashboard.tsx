@@ -2,12 +2,10 @@
  * Admin Dashboard Page (SCR-004)
  * 
  * Main dashboard for administrators to:
- * - Manage users (patients, staff)
- * - View system analytics
- * - Configure system settings
- * - Generate reports
- * 
- * This is a placeholder component - full implementation in future tasks.
+ * - View audit logs
+ * - Manage patient queue
+ * - Schedule appointments
+ * - Access clinical review
  * 
  * @module AdminDashboard
  * @created 2026-03-18
@@ -15,14 +13,74 @@
  */
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import './Dashboard.css';
+
+interface NavCard {
+  title: string;
+  description: string;
+  path: string;
+  icon: string;
+}
+
+const ADMIN_NAV_CARDS: NavCard[] = [
+  {
+    title: 'System Metrics',
+    description: 'Real-time operational metrics, system health, and analytics.',
+    path: '/admin/metrics',
+    icon: '📊',
+  },
+  {
+    title: 'Audit Logs',
+    description: 'View, filter, and export system-wide audit trail.',
+    path: '/admin/audit-logs',
+    icon: '🔐',
+  },
+  {
+    title: 'User Management',
+    description: 'Manage user accounts, roles, and permissions.',
+    path: '/admin/users',
+    icon: '👤',
+  },
+  {
+    title: 'Departments & Providers',
+    description: 'Manage departments, providers, and schedules.',
+    path: '/admin/departments',
+    icon: '🏥',
+  },
+  {
+    title: 'Patient Queue',
+    description: 'View and manage the patient queue, update status, and assign providers.',
+    path: '/staff/queue',
+    icon: '👥',
+  },
+  {
+    title: 'Book Appointment',
+    description: 'Schedule appointments on behalf of patients.',
+    path: '/staff/appointments/book',
+    icon: '📅',
+  },
+  {
+    title: 'AI Intake',
+    description: 'AI-assisted patient intake with smart form filling.',
+    path: '/intake/ai',
+    icon: '🤖',
+  },
+  {
+    title: 'Manual Intake',
+    description: 'Manually enter patient intake data.',
+    path: '/intake/manual',
+    icon: '📋',
+  },
+];
 
 /**
  * Admin Dashboard Component
  */
 export const AdminDashboard: React.FC = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <div className="dashboard">
@@ -41,26 +99,23 @@ export const AdminDashboard: React.FC = () => {
 
       <main className="dashboard__content">
         <section className="dashboard__welcome">
-          <h2>✅ Authentication Successful</h2>
-          <p>Welcome to the Admin Dashboard!</p>
-          <p className="dashboard__user-details">
-            <strong>Email:</strong> {user?.email}<br />
-            <strong>Role:</strong> {user?.role}<br />
-            <strong>ID:</strong> {user?.id}
-          </p>
+          <h2>Welcome, {user?.name || user?.email}</h2>
+          <p>Select a workflow to get started.</p>
         </section>
 
-        <section className="dashboard__placeholder">
-          <h3>Upcoming Features</h3>
-          <ul>
-            <li>👥 User management (CRUD operations)</li>
-            <li>📊 System analytics and metrics</li>
-            <li>⚙️ System configuration</li>
-            <li>📈 Generate reports</li>
-            <li>🔐 Security audit logs</li>
-            <li>🏥 Manage facilities and departments</li>
-          </ul>
-          <p><em>This is a placeholder dashboard. Full implementation coming in future tasks.</em></p>
+        <section className="dashboard__nav-grid" aria-label="Admin workflows">
+          {ADMIN_NAV_CARDS.map((card) => (
+            <button
+              key={card.path}
+              className="dashboard__nav-card"
+              onClick={() => navigate(card.path)}
+              type="button"
+            >
+              <span className="dashboard__nav-card-icon" aria-hidden="true">{card.icon}</span>
+              <h3 className="dashboard__nav-card-title">{card.title}</h3>
+              <p className="dashboard__nav-card-desc">{card.description}</p>
+            </button>
+          ))}
         </section>
       </main>
     </div>

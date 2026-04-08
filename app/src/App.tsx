@@ -24,6 +24,14 @@ import { AdminDashboard } from './pages/AdminDashboard';
 import { AppointmentBookingPage } from './pages/AppointmentBookingPage';
 import { QueueManagementPage } from './pages/QueueManagementPage';
 import { StaffBookingPage } from './pages/StaffBookingPage';
+import { AIPatientIntakePage } from './pages/AIPatientIntakePage';
+import { ManualIntakePage } from './pages/ManualIntakePage';
+import { DocumentUploadPage } from './pages/DocumentUploadPage';
+import { ClinicalDataReviewPage } from './pages/ClinicalDataReviewPage';
+import AuditLogsPage from './pages/AuditLogsPage';
+import { UserManagementPage } from './pages/UserManagementPage';
+import { DepartmentProviderManagement } from './pages/DepartmentProviderManagement';
+import { AdminMetricsDashboard } from './pages/AdminMetricsDashboard';
 import './App.css';
 
 // Create a client for React Query
@@ -115,6 +123,86 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Protected Routes - Admin Audit Logs (US-011) */}
+              <Route
+                path="/admin/audit-logs"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AuditLogsPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Protected Routes - Admin User Management (US-035) */}
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <UserManagementPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Protected Routes - Admin Department & Provider Management (US-036) */}
+              <Route
+                path="/admin/departments"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <DepartmentProviderManagement />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Protected Routes - Admin Metrics Dashboard (US-039) */}
+              <Route
+                path="/admin/metrics"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminMetricsDashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Protected Routes - AI Intake */}
+              <Route
+                path="/intake/ai"
+                element={
+                  <ProtectedRoute allowedRoles={['patient', 'staff', 'doctor', 'admin']}>
+                    <AIPatientIntakePage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Protected Routes - Manual Intake */}
+              <Route
+                path="/intake/manual"
+                element={
+                  <ProtectedRoute allowedRoles={['patient', 'staff', 'doctor', 'admin']}>
+                    <ManualIntakePage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Protected Routes - Document Upload */}
+              <Route
+                path="/documents/upload/:patientId"
+                element={
+                  <ProtectedRoute allowedRoles={['patient', 'staff', 'doctor', 'admin']}>
+                    <DocumentUploadPage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Protected Routes - Clinical Data Review (SCR-010) */}
+              <Route
+                path="/clinical-review/:patientId"
+                element={
+                  <ProtectedRoute allowedRoles={['staff', 'doctor', 'admin']}>
+                    <ClinicalDataReviewPage />
                   </ProtectedRoute>
                 }
               />
