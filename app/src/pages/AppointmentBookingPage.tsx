@@ -25,7 +25,9 @@ import { ConfirmationModal } from '../components/booking/ConfirmationModal';
 import { JoinWaitlistModal } from '../components/waitlist/JoinWaitlistModal';
 import type { WaitlistSlotData } from '../components/waitlist/JoinWaitlistModal';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
+import { LimitedFunctionalityBanner } from '../components/circuit-breaker/LimitedFunctionalityBanner';
 import type { Slot } from '../types/appointment.types';
+import '../styles/form-responsive.css';
 import './AppointmentBookingPage.css';
 
 /**
@@ -216,6 +218,9 @@ export const AppointmentBookingPage: React.FC = () => {
 
   return (
     <div className="booking-page">
+      {/* Circuit Breaker Banner – US_041 TASK_002 */}
+      <LimitedFunctionalityBanner />
+
       <div className="booking-page-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '4px' }}>
           <button
@@ -345,7 +350,7 @@ export const AppointmentBookingPage: React.FC = () => {
                     <select
                       value={calendarProvider}
                       onChange={(e) => setCalendarProvider(e.target.value as 'google' | 'outlook')}
-                      className="calendar-provider-select"
+                      className="calendar-provider-select select responsive-select"
                     >
                       <option value="google">Google Calendar</option>
                       <option value="outlook">Outlook Calendar</option>
@@ -355,7 +360,7 @@ export const AppointmentBookingPage: React.FC = () => {
 
                 <button
                   type="button"
-                  className="button button-primary button-block"
+                  className="button button-primary button-block btn-responsive btn-responsive--primary btn-responsive--full-width-mobile"
                   onClick={handleBookAppointment}
                   disabled={booking}
                 >
