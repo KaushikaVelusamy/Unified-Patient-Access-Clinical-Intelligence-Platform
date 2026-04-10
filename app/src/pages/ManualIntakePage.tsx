@@ -7,7 +7,7 @@
  * Manual intake form page with auto-save, progress bar,
  * and switch to AI mode functionality.
  */
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ManualIntakeForm } from '../components/intake/ManualIntakeForm';
 import { AutoSaveIndicator } from '../components/intake/AutoSaveIndicator';

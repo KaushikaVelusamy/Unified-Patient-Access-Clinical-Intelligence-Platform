@@ -28,18 +28,18 @@ import type { ProfileConflict } from '../types/clinicalProfile.types';
 
 export const ClinicalDataReviewPage: React.FC = () => {
   const { patientId } = useParams<{ patientId: string }>();
-  const { profile, loading, error, refresh } = useClinicalProfile(patientId || '');
-  const { resolveConflict } = useConflictResolution();
+  const { profile, loading, error, refetch } = useClinicalProfile(patientId || '');
+  const { resolveConflict } = useConflictResolution(patientId || null);
 
   const [activeTab, setActiveTab] = useState<ClinicalTabId>('demographics');
   const [resolvingConflict, setResolvingConflict] = useState<ProfileConflict | null>(null);
 
   const handleResolveConflict = useCallback(async (fieldName: string, selectedValue: string, notes: string) => {
     if (!patientId) return;
-    await resolveConflict(patientId, fieldName, selectedValue, notes);
+    await resolveConflict(fieldName, selectedValue, notes);
     setResolvingConflict(null);
-    refresh();
-  }, [patientId, resolveConflict, refresh]);
+    refetch();
+  }, [patientId, resolveConflict, refetch]);
 
   if (!patientId) {
     return <div style={{ padding: '2rem', textAlign: 'center', color: '#6B7280' }}>No patient ID provided.</div>;
@@ -53,7 +53,7 @@ export const ClinicalDataReviewPage: React.FC = () => {
     return (
       <div style={{ padding: '2rem', textAlign: 'center' }}>
         <div style={{ color: '#991B1B', marginBottom: '1rem' }}>{error}</div>
-        <button onClick={refresh} style={{ padding: '0.5rem 1rem', border: '1px solid #D1D5DB', borderRadius: '0.375rem', cursor: 'pointer' }}>
+        <button onClick={refetch} style={{ padding: '0.5rem 1rem', border: '1px solid #D1D5DB', borderRadius: '0.375rem', cursor: 'pointer' }}>
           Retry
         </button>
       </div>
@@ -95,17 +95,18 @@ export const ClinicalDataReviewPage: React.FC = () => {
           <div>
             <ConflictBanner
               conflicts={profile.medication_conflicts?.map(mc => ({
-                conflict_id: mc.conflict_id,
                 conflict_type: mc.conflict_type,
                 medications_involved: mc.medications_involved,
                 severity_level: mc.severity_level,
                 interaction_mechanism: mc.interaction_mechanism || '',
                 clinical_guidance: mc.clinical_guidance || '',
+                dosage_dependent: false,
+                action_required: mc.severity_level >= 4,
               })) || []}
             />
             <div style={{ marginTop: '1rem' }}>
               <MedicationsSection
-                medications={profile.medical_history?.medications || []}
+                medications={profile.current_medications || []}
                 medicationConflicts={profile.medication_conflicts || []}
               />
             </div>
@@ -115,9 +116,9 @@ export const ClinicalDataReviewPage: React.FC = () => {
         return (
           <div role="tabpanel" id="clinical-panel-allergies">
             <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>Allergies</h2>
-            {profile.medical_history?.allergies && profile.medical_history.allergies.length > 0 ? (
+            {profile.allergies && profile.allergies.length > 0 ? (
               <div style={{ display: 'grid', gap: '0.75rem' }}>
-                {profile.medical_history.allergies.map((allergy, idx) => (
+                {profile.allergies.map((allergy, idx) => (
                   <div key={idx} style={{ padding: '0.75rem', border: '1px solid #E5E7EB', borderRadius: '0.5rem' }}>
                     <div style={{ fontWeight: 500 }}>{allergy.allergen}</div>
                     <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>
@@ -133,20 +134,20 @@ export const ClinicalDataReviewPage: React.FC = () => {
           </div>
         );
       case 'lab-results':
-        return <LabResultsSection labResults={profile.medical_history?.lab_results || []} />;
+        return <LabResultsSection labResults={profile.lab_results || []} />;
       case 'visits':
         return (
           <div role="tabpanel" id="clinical-panel-visits">
             <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>Visits</h2>
-            {profile.medical_history?.visits && profile.medical_history.visits.length > 0 ? (
+            {profile.previous_visits && profile.previous_visits.length > 0 ? (
               <div style={{ display: 'grid', gap: '0.75rem' }}>
-                {profile.medical_history.visits.map((visit, idx) => (
+                {profile.previous_visits.map((visit, idx) => (
                   <div key={idx} style={{ padding: '0.75rem', border: '1px solid #E5E7EB', borderRadius: '0.5rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <strong>{visit.visit_type}</strong>
+                      <strong>{visit.chief_complaint}</strong>
                       <span style={{ color: '#6B7280', fontSize: '0.875rem' }}>{visit.date}</span>
                     </div>
-                    {visit.provider && <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>Provider: {visit.provider}</div>}
+                    {visit.provider_name && <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>Provider: {visit.provider_name}</div>}
                   </div>
                 ))}
               </div>
@@ -179,7 +180,7 @@ export const ClinicalDataReviewPage: React.FC = () => {
                         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
                           {conflict.conflicting_values.map((val, vi) => (
                             <span key={vi} style={{ fontSize: '0.75rem', padding: '0.125rem 0.375rem', borderRadius: '0.25rem', backgroundColor: '#FEF3C7', color: '#78350F' }}>
-                              {val.source}: {val.value}
+                              {val.source_document_name || val.source_document_id}: {val.value}
                             </span>
                           ))}
                         </div>

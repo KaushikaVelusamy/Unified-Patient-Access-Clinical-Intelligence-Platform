@@ -32,7 +32,7 @@ export function useAutoSave(
   const [saveError, setSaveError] = useState<string | null>(null);
   const prevDataRef = useRef<string>('');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const saveDraftRef = useRef<() => Promise<void>>();
+  const saveDraftRef = useRef<(() => Promise<void>) | undefined>(undefined);
 
   // Reset state when patientId changes
   useEffect(() => {

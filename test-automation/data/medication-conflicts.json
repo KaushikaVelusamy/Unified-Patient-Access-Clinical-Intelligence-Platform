@@ -1,0 +1,66 @@
+{
+  "patients": {
+    "PAT-001": {
+      "id": "PAT-001",
+      "medications_count": 5,
+      "conflict_count": 2,
+      "conflicts": [
+        {
+          "id": "CONF-001",
+          "medications": ["Warfarin", "Aspirin"],
+          "severity": "High",
+          "description": "Increased risk of bleeding"
+        },
+        {
+          "id": "CONF-002",
+          "medications": ["Lisinopril", "Ibuprofen"],
+          "severity": "Medium",
+          "description": "May reduce effectiveness of blood pressure medication"
+        }
+      ]
+    },
+    "PAT-002": {
+      "id": "PAT-002",
+      "medications_count": 3,
+      "conflict_count": 0,
+      "conflicts": []
+    },
+    "PAT-003": {
+      "id": "PAT-003",
+      "medications_count": 0,
+      "conflict_count": 0,
+      "conflicts": [],
+      "data_incomplete": true
+    },
+    "PAT-004": {
+      "id": "PAT-004",
+      "medications_count": 3,
+      "conflict_count": 1,
+      "conflicts": [
+        {
+          "id": "CONF-003",
+          "medications": ["Warfarin", "Aspirin", "Clopidogrel"],
+          "severity": "Critical",
+          "description": "Extreme bleeding risk"
+        }
+      ]
+    },
+    "PAT-005": {
+      "id": "PAT-005",
+      "medications_count": 4,
+      "conflict_count": 0,
+      "conflicts": [],
+      "service_unavailable": true
+    }
+  },
+  "resolution": {
+    "conflict_id": "CONF-001",
+    "medications": ["Warfarin", "Aspirin"],
+    "action": "Discontinue Aspirin, consult with cardiologist",
+    "notes": "Discussed with patient. Alternative pain management plan in place."
+  },
+  "staff": {
+    "email": "staff.testuser@example.com",
+    "password": "StaffSecure123!"
+  }
+}

@@ -40,12 +40,12 @@ export const UnifiedPatientProfile: React.FC<UnifiedPatientProfileProps> = ({ pr
       case 'medications':
         return (
           <MedicationsSection
-            medications={profile.medical_history?.medications || []}
+            medications={profile.current_medications || []}
             medicationConflicts={profile.medication_conflicts || []}
           />
         );
       case 'lab-results':
-        return <LabResultsSection labResults={profile.medical_history?.lab_results || []} />;
+        return <LabResultsSection labResults={profile.lab_results || []} />;
       case 'medical-history':
         return (
           <div role="tabpanel" id="panel-medical-history">
@@ -69,9 +69,9 @@ export const UnifiedPatientProfile: React.FC<UnifiedPatientProfileProps> = ({ pr
         return (
           <div role="tabpanel" id="panel-allergies">
             <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>Allergies</h2>
-            {profile.medical_history?.allergies && profile.medical_history.allergies.length > 0 ? (
+            {profile.allergies && profile.allergies.length > 0 ? (
               <div style={{ display: 'grid', gap: '0.75rem' }}>
-                {profile.medical_history.allergies.map((allergy, idx) => (
+                {profile.allergies.map((allergy: { allergen: string; severity: string; reaction?: string }, idx: number) => (
                   <div key={idx} style={{ padding: '0.75rem', border: '1px solid #E5E7EB', borderRadius: '0.5rem' }}>
                     <div style={{ fontWeight: 500 }}>{allergy.allergen}</div>
                     <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>
@@ -90,16 +90,16 @@ export const UnifiedPatientProfile: React.FC<UnifiedPatientProfileProps> = ({ pr
         return (
           <div role="tabpanel" id="panel-visits">
             <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1rem' }}>Visits</h2>
-            {profile.medical_history?.visits && profile.medical_history.visits.length > 0 ? (
+            {profile.previous_visits && profile.previous_visits.length > 0 ? (
               <div style={{ display: 'grid', gap: '0.75rem' }}>
-                {profile.medical_history.visits.map((visit, idx) => (
+                {profile.previous_visits.map((visit: { chief_complaint: string; date: string; provider_name?: string; notes_preview?: string }, idx: number) => (
                   <div key={idx} style={{ padding: '0.75rem', border: '1px solid #E5E7EB', borderRadius: '0.5rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <strong>{visit.visit_type}</strong>
+                      <strong>{visit.chief_complaint}</strong>
                       <span style={{ color: '#6B7280', fontSize: '0.875rem' }}>{visit.date}</span>
                     </div>
-                    {visit.provider && <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>Provider: {visit.provider}</div>}
-                    {visit.notes && <div style={{ fontSize: '0.875rem', marginTop: '0.25rem' }}>{visit.notes}</div>}
+                    {visit.provider_name && <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>Provider: {visit.provider_name}</div>}
+                    {visit.notes_preview && <div style={{ fontSize: '0.875rem', marginTop: '0.25rem' }}>{visit.notes_preview}</div>}
                   </div>
                 ))}
               </div>

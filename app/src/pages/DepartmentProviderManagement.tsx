@@ -38,7 +38,7 @@ export const DepartmentProviderManagement: React.FC = () => {
   const {
     providers, loading: providersLoading, pagination: providerPagination,
     createProvider, deleteProvider,
-    creating: providerCreating, deleting: providerDeleting,
+    creating: providerCreating, deleting: _providerDeleting,
   } = useProviders({ page: providerPage, status: providerStatusFilter });
 
   const { departments: deptDropdown } = useDepartments();

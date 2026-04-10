@@ -64,7 +64,7 @@ export const UserManagementPage: React.FC = () => {
   const { departments } = useDepartments();
 
   // Debounce search input
-  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => {
     searchTimeoutRef.current = setTimeout(() => {
       setDebouncedSearch(searchTerm);

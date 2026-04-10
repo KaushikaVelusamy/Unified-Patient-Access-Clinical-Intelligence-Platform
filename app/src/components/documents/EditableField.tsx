@@ -5,7 +5,7 @@
  * @task US_029 TASK_004
  */
 
-import React, { useState, useRef, useEffect, KeyboardEvent } from 'react';
+import React, { useState, useRef, useEffect, type KeyboardEvent } from 'react';
 
 interface EditableFieldProps {
   label: string;

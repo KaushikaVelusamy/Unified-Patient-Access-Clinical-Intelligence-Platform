@@ -11,14 +11,16 @@ import type { ValidateMedicationResult } from '../../types/clinicalProfile.types
 import { useConflictCheck } from '../../hooks/useConflictCheck';
 
 interface MedicationValidationProps {
+  patientId?: string | null;
   onSelect?: (medication: ValidateMedicationResult) => void;
 }
 
-export const MedicationValidation: React.FC<MedicationValidationProps> = ({ onSelect }) => {
-  const { validateMedication, validationResult, validating } = useConflictCheck();
+export const MedicationValidation: React.FC<MedicationValidationProps> = ({ patientId = null, onSelect }) => {
+  const { validateMedication, loading: validating } = useConflictCheck(patientId);
   const [query, setQuery] = useState('');
+  const [validationResult, setValidationResult] = useState<(ValidateMedicationResult & { is_recognized?: boolean }) | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -27,8 +29,9 @@ export const MedicationValidation: React.FC<MedicationValidationProps> = ({ onSe
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     if (value.length >= 2) {
-      debounceRef.current = setTimeout(() => {
-        validateMedication(value);
+      debounceRef.current = setTimeout(async () => {
+        const result = await validateMedication(value);
+        setValidationResult(result ? { ...result, is_recognized: result.valid } : null);
         setShowSuggestions(true);
       }, 300);
     } else {
@@ -102,7 +105,7 @@ export const MedicationValidation: React.FC<MedicationValidationProps> = ({ onSe
           {validationResult.suggestions && validationResult.suggestions.length > 0 && (
             <div>
               <div style={{ fontSize: '0.6875rem', color: '#6B7280', marginBottom: '0.25rem' }}>Did you mean:</div>
-              {validationResult.suggestions.map((suggestion, idx) => (
+              {validationResult.suggestions.map((suggestion: { name: string; confidence: number }, idx: number) => (
                 <button
                   key={idx}
                   onClick={() => handleSelect({ ...validationResult, normalized_name: suggestion.name })}
@@ -122,7 +125,7 @@ export const MedicationValidation: React.FC<MedicationValidationProps> = ({ onSe
                 >
                   {suggestion.name}
                   <span style={{ fontSize: '0.75rem', color: '#6B7280', marginLeft: '0.5rem' }}>
-                    ({(suggestion.similarity * 100).toFixed(0)}% match)
+                    ({(suggestion.confidence * 100).toFixed(0)}% match)
                   </span>
                 </button>
               ))}

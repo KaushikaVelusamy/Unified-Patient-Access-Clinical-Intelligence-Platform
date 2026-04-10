@@ -118,7 +118,7 @@ export const getAvailableDates = async (filters?: SlotFilters): Promise<string[]
     );
 
     const data = response.data;
-    return data.dates || data.data?.dates || [];
+    return data.dates || [];
   } catch (error) {
     if (error instanceof AxiosError) {
       throw new Error(error.response?.data?.message || 'Failed to fetch available dates');

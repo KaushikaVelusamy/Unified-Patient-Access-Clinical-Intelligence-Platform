@@ -36,7 +36,7 @@ export const AIPatientIntakePage: React.FC = () => {
     messages,
     extractedData,
     progress,
-    conversationId,
+    conversationId: _conversationId,
     isLoading,
     error,
     contextFields,

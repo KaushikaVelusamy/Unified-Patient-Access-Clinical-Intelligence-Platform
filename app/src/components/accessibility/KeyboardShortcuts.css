@@ -1,0 +1,93 @@
+/* KeyboardShortcuts modal styles
+ * @task US_043 TASK_002
+ */
+
+.keyboard-shortcuts-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.keyboard-shortcuts-modal {
+  background: var(--bg-primary, #ffffff);
+  color: var(--text-primary, #1a1a1a);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 480px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.shortcuts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+}
+
+.shortcuts-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.shortcuts-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: var(--text-secondary, #666);
+}
+
+.shortcuts-close:hover,
+.shortcuts-close:focus-visible {
+  background: var(--bg-secondary, #f5f5f5);
+}
+
+.shortcuts-body {
+  padding: 16px 24px 24px;
+}
+
+.shortcuts-body section + section {
+  margin-top: 16px;
+}
+
+.shortcuts-body h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary, #666);
+}
+
+.shortcuts-body ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.shortcuts-body li {
+  padding: 6px 0;
+  font-size: 14px;
+}
+
+.shortcuts-body kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  font-family: monospace;
+  font-size: 12px;
+  background: var(--bg-secondary, #f0f0f0);
+  border: 1px solid var(--border-color, #ccc);
+  border-radius: 4px;
+  box-shadow: 0 1px 0 var(--border-color, #ccc);
+}
