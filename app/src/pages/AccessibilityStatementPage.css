@@ -1,0 +1,47 @@
+/**
+ * Accessibility Statement Page styles
+ * @task US_043 TASK_006
+ */
+
+.a11y-statement {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: var(--spacing-lg, 24px) var(--spacing-base, 16px);
+  line-height: 1.6;
+}
+
+.a11y-statement h1 {
+  margin-bottom: var(--spacing-xs, 4px);
+}
+
+.a11y-statement__updated {
+  color: var(--color-text-secondary, #666);
+  font-size: var(--typography-font-size-sm, 14px);
+  margin-bottom: var(--spacing-lg, 24px);
+}
+
+.a11y-statement section {
+  margin-bottom: var(--spacing-lg, 24px);
+}
+
+.a11y-statement h2 {
+  margin-top: var(--spacing-lg, 24px);
+}
+
+.a11y-statement h3 {
+  margin-top: var(--spacing-base, 16px);
+  font-size: var(--typography-font-size-base, 16px);
+}
+
+.a11y-statement ul {
+  padding-left: 1.5rem;
+}
+
+.a11y-statement li {
+  margin-bottom: var(--spacing-xs, 4px);
+}
+
+.a11y-statement a {
+  color: var(--color-text-link, #0066CC);
+  text-decoration: underline;
+}

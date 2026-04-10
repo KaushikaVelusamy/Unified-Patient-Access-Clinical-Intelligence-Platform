@@ -1,35 +1,123 @@
+# =========================
 # Environment variables
+# =========================
 .env
 .env.local
 .env.*.local
+.env.production
+server/.env.production
 
+# =========================
 # OS specific files
+# =========================
 .DS_Store
 Thumbs.db
+Desktop.ini
+ehthumbs.db
 
-# Temporary files
+# =========================
+# Temporary / swap files
+# =========================
 *.tmp
 *.temp
+*.swp
+*.swo
+*~
 nul
+
+# =========================
+# IDE / Editor
+# =========================
+.vscode/mcp.json
 */settings.local.json
 
+# =========================
+# Tooling / CI artifacts
+# =========================
 .propel/template
 .github/*
-.vscode/mcp.json
 
+# =========================
+# Playwright MCP logs, snapshots, screenshots
+# =========================
+.playwright-mcp/
+
+# =========================
+# Build outputs
+# =========================
 bin/
-
 obj/
- 
 build/
-
 dist/
-
- 
 node_modules/
+storybook-static/
 
- 
-*.temp
+# =========================
+# Logs
+# =========================
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
- 
- 
+# =========================
+# Test results / coverage
+# =========================
+coverage/
+test-results/
+playwright-report/
+app/test-results/
+app/playwright-report/
+
+# =========================
+# Screenshots / Wireframes / Images (root-level)
+# =========================
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.xlsx
+
+# Wireframe / screenshot capture directories (root-level, no extension)
+desktop_1440_*
+impl_mobile_*
+impl_tablet_*
+impl_desktop_*
+large_desktop_*
+mobile_*
+tablet_*
+staff_*
+waitlist_*
+wireframe_*
+zoom_*
+
+# =========================
+# Debug / utility scripts (root-level)
+# =========================
+/check-schema.js
+/check-tables.js
+/fix-cloud-db.js
+/fix-passwords.js
+/setup-cloud-db.js
+/test-all-apis.js
+
+# Server debug/utility scripts
+server/check-*.js
+server/debug-*.js
+server/diagnose-*.js
+server/create-*.js
+server/reset-*.js
+server/test-*.js
+server/setup-*.js
+server/seed-*.js
+server/install-service.js
+server/uninstall-service.js
+server/pm2-startup.*
+
+# =========================
+# Miscellaneous
+# =========================
+pr-result.txt

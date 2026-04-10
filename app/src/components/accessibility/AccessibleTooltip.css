@@ -1,0 +1,48 @@
+/* AccessibleTooltip styles
+ * @task US_043 TASK_004
+ */
+
+.a11y-tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.a11y-tooltip {
+  position: absolute;
+  z-index: 9999;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+  color: #fff;
+  background: var(--gray-800, #1f2937);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  pointer-events: auto;
+}
+
+/* Positions */
+.a11y-tooltip--top {
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.a11y-tooltip--bottom {
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.a11y-tooltip--left {
+  right: calc(100% + 6px);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.a11y-tooltip--right {
+  left: calc(100% + 6px);
+  top: 50%;
+  transform: translateY(-50%);
+}
