@@ -15,6 +15,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { FeatureFlagsTable } from '../components/admin/FeatureFlagsTable';
 import './Dashboard.css';
 
 interface UserRow {
@@ -36,10 +37,13 @@ interface ApiUser {
   name?: string;
   firstName?: string;
   lastName?: string;
+  first_name?: string;
+  last_name?: string;
   email?: string;
   role?: string;
   userType?: string;
   isActive?: boolean;
+  is_active?: boolean;
 }
 
 interface ApiLog {
@@ -47,7 +51,10 @@ interface ApiLog {
   eventType?: string;
   userName?: string;
   userId?: string;
+  user_email?: string;
+  user_id?: string | number;
   createdAt?: string;
+  timestamp?: string;
 }
 
 function getRelativeTime(dateStr: string): string {
@@ -63,25 +70,29 @@ function getRelativeTime(dateStr: string): string {
 
 function getUserName(u: ApiUser): string {
   if (u.name) { return u.name; }
-  const fullName = `${u.firstName || ''} ${u.lastName || ''}`.trim();
+  const first = u.firstName || u.first_name || '';
+  const last = u.lastName || u.last_name || '';
+  const fullName = `${first} ${last}`.trim();
   return fullName || u.email || '--';
 }
 
 function mapUserRow(u: ApiUser): UserRow {
+  const active = u.isActive ?? u.is_active;
   return {
     name: getUserName(u),
     id: u.id?.toString() || '--',
     email: u.email || '--',
     userType: u.role || u.userType || 'patient',
-    status: u.isActive !== false ? 'Active' : 'Inactive',
+    status: active !== false ? 'Active' : 'Inactive',
   };
 }
 
 function mapAuditRow(l: ApiLog): AuditRow {
+  const ts = l.createdAt || l.timestamp;
   return {
     action: l.action || l.eventType || '--',
-    user: l.userName || l.userId || 'System',
-    time: l.createdAt ? getRelativeTime(l.createdAt) : '--',
+    user: l.userName || l.user_email || l.userId || (l.user_id?.toString()) || 'System',
+    time: ts ? getRelativeTime(ts) : '--',
   };
 }
 
@@ -98,6 +109,7 @@ export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
+  const [activeTab, setActiveTab] = useState<'overview' | 'feature-flags'>('overview');
   const [stats, setStats] = useState({ totalUsers: 0, activeStaff: 0, todayAppointments: 0, systemAlerts: 0 });
   const [recentUsers, setRecentUsers] = useState<UserRow[]>([]);
   const [recentLogs, setRecentLogs] = useState<AuditRow[]>([]);
@@ -204,6 +216,32 @@ export const AdminDashboard: React.FC = () => {
         <p className="ad-header__subtitle">System overview and management — {todayStr}</p>
       </section>
 
+      {/* Tab Navigation */}
+      <nav className="ad-tabs" aria-label="Admin dashboard tabs">
+        <button
+          className={`ad-tabs__btn ${activeTab === 'overview' ? 'ad-tabs__btn--active' : ''}`}
+          onClick={() => setActiveTab('overview')}
+          aria-selected={activeTab === 'overview'}
+          role="tab"
+        >
+          Overview
+        </button>
+        <button
+          className={`ad-tabs__btn ${activeTab === 'feature-flags' ? 'ad-tabs__btn--active' : ''}`}
+          onClick={() => setActiveTab('feature-flags')}
+          aria-selected={activeTab === 'feature-flags'}
+          role="tab"
+        >
+          Feature Flags
+        </button>
+      </nav>
+
+      {activeTab === 'feature-flags' ? (
+        <section className="ad-tab-content" aria-label="Feature flags management">
+          <FeatureFlagsTable />
+        </section>
+      ) : (
+      <>
       {/* 4 Stat Cards */}
       <div className="ad-stats">
         <div className="sd-stat-card">
@@ -248,6 +286,8 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </section>
       </div>
+      </>
+      )}
     </div>
   );
 };
