@@ -10,7 +10,7 @@
  * @task US_023 TASK_004
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { getDepartments, getProviders } from '../../services/appointmentService';
@@ -66,14 +66,14 @@ export const StaffBookingForm: React.FC<StaffBookingFormProps> = ({
   const isDisabled = !selectedPatient;
 
   // Fetch departments
-  const { data: departments = [] } = useQuery({
+  useQuery({
     queryKey: ['departments'],
     queryFn: getDepartments,
     staleTime: 10 * 60 * 1000,
   });
 
   // Fetch providers
-  const { data: providers = [] } = useQuery({
+  useQuery({
     queryKey: ['providers', selectedDepartment],
     queryFn: () => getProviders(selectedDepartment || undefined),
     staleTime: 10 * 60 * 1000,

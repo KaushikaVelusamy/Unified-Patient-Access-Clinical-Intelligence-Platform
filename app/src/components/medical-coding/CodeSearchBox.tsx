@@ -15,8 +15,8 @@ interface CodeSearchBoxProps {
   onSelect?: (code: CodeSearchResult) => void;
 }
 
-export const CodeSearchBox: React.FC<CodeSearchBoxProps> = ({ onSelect }) => {
-  const { searchCodes } = useMedicalCoding();
+export const CodeSearchBox: React.FC<CodeSearchBoxProps> = ({ appointmentId, onSelect }) => {
+  const { searchCodes, searchResults } = useMedicalCoding(appointmentId);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<CodeSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -30,8 +30,8 @@ export const CodeSearchBox: React.FC<CodeSearchBoxProps> = ({ onSelect }) => {
     }
     setSearching(true);
     try {
-      const found = await searchCodes(searchQuery);
-      setResults(found);
+      await searchCodes(searchQuery);
+      setResults(searchResults);
       setShowResults(true);
     } finally {
       setSearching(false);

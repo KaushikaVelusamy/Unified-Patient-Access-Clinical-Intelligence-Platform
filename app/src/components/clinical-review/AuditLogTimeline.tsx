@@ -26,18 +26,18 @@ interface HistoryEntry {
 }
 
 export const AuditLogTimeline: React.FC<AuditLogTimelineProps> = ({ patientId }) => {
-  const { getHistory, history: rawHistory, loading } = useConflictResolution();
+  const { getHistory, loading } = useConflictResolution(patientId);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
 
   useEffect(() => {
-    getHistory(patientId);
-  }, [patientId, getHistory]);
-
-  useEffect(() => {
-    if (rawHistory) {
-      setHistory(rawHistory as unknown as HistoryEntry[]);
-    }
-  }, [rawHistory]);
+    const fetchHistory = async () => {
+      const data = await getHistory();
+      if (data) {
+        setHistory(data as unknown as HistoryEntry[]);
+      }
+    };
+    fetchHistory();
+  }, [getHistory]);
 
   if (loading) {
     return <div style={{ padding: '1rem', color: '#6B7280' }}>Loading audit history...</div>;

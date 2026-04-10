@@ -14,7 +14,6 @@ import React, { createContext, useReducer, useCallback, useRef } from 'react';
 import type { Notification } from '../types/notification.types';
 
 const MAX_VISIBLE_POPUPS = 3;
-const PAGE_SIZE = 20;
 
 interface NotificationState {
   notifications: Notification[];

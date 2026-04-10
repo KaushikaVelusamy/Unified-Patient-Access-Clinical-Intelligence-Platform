@@ -59,7 +59,7 @@ export const ConflictAlert: React.FC<ConflictAlertProps> = ({ conflicts, onResol
                       color: '#78350F',
                     }}
                   >
-                    {val.source}: {val.value}
+                    {val.source_document_name || val.source_document_id}: {val.value}
                   </span>
                 ))}
               </div>

@@ -28,7 +28,7 @@ export const PatientSelector: React.FC<Props> = ({ onSelect }) => {
   const [results, setResults] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     if (query.length < 2) {

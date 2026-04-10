@@ -15,7 +15,7 @@ interface ClinicalPatientHeaderProps {
 }
 
 export const ClinicalPatientHeader: React.FC<ClinicalPatientHeaderProps> = ({ profile }) => {
-  const { demographics, processing_status, confidence_score } = profile;
+  const { demographics, processing_status, profile_confidence_score } = profile;
   const conflictCount = profile.conflicts?.filter(c => c.resolution_status === 'Pending').length || 0;
   const medConflictCount = profile.medication_conflicts?.filter(c => c.conflict_status === 'Active').length || 0;
 
@@ -34,16 +34,16 @@ export const ClinicalPatientHeader: React.FC<ClinicalPatientHeaderProps> = ({ pr
 
       <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
         {/* Profile Confidence */}
-        {confidence_score !== undefined && (
+        {profile_confidence_score !== undefined && (
           <div style={{
             padding: '0.375rem 0.75rem',
             borderRadius: '0.375rem',
             fontSize: '0.75rem',
             fontWeight: 500,
-            backgroundColor: confidence_score >= 0.9 ? '#D1FAE5' : '#FEF3C7',
-            color: confidence_score >= 0.9 ? '#065F46' : '#92400E',
+            backgroundColor: profile_confidence_score >= 0.9 ? '#D1FAE5' : '#FEF3C7',
+            color: profile_confidence_score >= 0.9 ? '#065F46' : '#92400E',
           }}>
-            Profile: {(confidence_score * 100).toFixed(0)}%
+            Profile: {(profile_confidence_score * 100).toFixed(0)}%
           </div>
         )}
 

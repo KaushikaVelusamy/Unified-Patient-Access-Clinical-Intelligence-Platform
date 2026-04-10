@@ -15,7 +15,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { FAB } from '../components/Dashboard/FAB';
+import { FAB } from '../components/dashboard/FAB';
 import api from '../services/api';
 import './Dashboard.css';
 

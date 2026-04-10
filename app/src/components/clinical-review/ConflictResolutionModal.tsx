@@ -75,7 +75,7 @@ export const ConflictResolutionModal: React.FC<ConflictResolutionModalProps> = (
                 />
                 <div>
                   <div style={{ fontWeight: 500, fontSize: '0.875rem' }}>{val.value}</div>
-                  <div style={{ fontSize: '0.75rem', color: '#6B7280', marginTop: '0.125rem' }}>Source: {val.source}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#6B7280', marginTop: '0.125rem' }}>Source: {val.source_document_name || val.source_document_id}</div>
                   {val.confidence !== undefined && (
                     <div style={{ fontSize: '0.75rem', color: '#6B7280' }}>Confidence: {(val.confidence * 100).toFixed(0)}%</div>
                   )}

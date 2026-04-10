@@ -16,6 +16,7 @@ import { axe, type AxeMatchers } from 'vitest-axe';
 import * as matchers from 'vitest-axe/matchers';
 import type { AxeResults, Result as AxeViolation, ImpactValue, RunOptions } from 'axe-core';
 import type { ReactElement } from 'react';
+import { expect } from 'vitest';
 
 // Extend Vitest expect with toHaveNoViolations matcher
 expect.extend(matchers);

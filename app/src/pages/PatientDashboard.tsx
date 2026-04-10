@@ -22,7 +22,7 @@ import { AppointmentCard } from '../components/dashboard/AppointmentCard';
 import { WelcomeBanner } from '../components/dashboard/WelcomeBanner';
 import { NotificationsPanel } from '../components/dashboard/NotificationsPanel';
 import { useBreakpoint } from '../hooks/useBreakpoint';
-import { FAB } from '../components/Dashboard/FAB';
+import { FAB } from '../components/dashboard/FAB';
 import { useAuth } from '../hooks/useAuth';
 import './Dashboard.css';
 
@@ -35,14 +35,14 @@ export const PatientDashboard: React.FC = () => {
   const { user } = useAuth();
   const breakpoint = useBreakpoint();
   const isDesktop = breakpoint === 'desktop' || breakpoint === 'large-desktop';
-  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [_cancellingId, setCancellingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'appointments' | 'notifications'>('appointments');
 
   const handleCancel = async (appointmentId: string) => {
     if (!confirm('Are you sure you want to cancel this appointment?')) return;
     setCancellingId(appointmentId);
     try {
-      await cancelAppointment(appointmentId, 'Cancelled by patient');
+      await cancelAppointment(appointmentId);
       await refreshAppointments();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to cancel appointment');

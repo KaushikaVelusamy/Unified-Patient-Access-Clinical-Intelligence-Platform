@@ -25,7 +25,7 @@ export const OverrideForm: React.FC<OverrideFormProps> = ({ conflict, onSubmit, 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isValid) {
-      onSubmit(conflict.conflict_id || '', reason.trim());
+      onSubmit(conflict.conflict_type || '', reason.trim());
     }
   };
 

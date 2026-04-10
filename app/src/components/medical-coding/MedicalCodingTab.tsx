@@ -20,20 +20,20 @@ interface MedicalCodingTabProps {
 }
 
 export const MedicalCodingTab: React.FC<MedicalCodingTabProps> = ({ appointmentId }) => {
-  const { suggestions, loading, error, fetchSuggestions, generateCodes, reviewCode, bulkApprove } = useMedicalCoding();
+  const { suggestions, loading, error, fetchSuggestions, generateCodes, reviewCode, bulkApprove } = useMedicalCoding(appointmentId);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingCode, setEditingCode] = useState<MedicalCodeSuggestion | null>(null);
   const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
-    fetchSuggestions(appointmentId);
+    fetchSuggestions();
   }, [appointmentId, fetchSuggestions]);
 
   const handleGenerate = useCallback(async () => {
     setGenerating(true);
     try {
-      await generateCodes(appointmentId);
-      await fetchSuggestions(appointmentId);
+      await generateCodes(appointmentId, 'Auto-generated from clinical data');
+      await fetchSuggestions();
     } finally {
       setGenerating(false);
     }
@@ -41,13 +41,13 @@ export const MedicalCodingTab: React.FC<MedicalCodingTabProps> = ({ appointmentI
 
   const handleApprove = useCallback(async (suggestion: MedicalCodeSuggestion) => {
     await reviewCode(suggestion.suggestion_id, 'approve');
-    await fetchSuggestions(appointmentId);
-  }, [reviewCode, fetchSuggestions, appointmentId]);
+    await fetchSuggestions();
+  }, [reviewCode, fetchSuggestions]);
 
   const handleReject = useCallback(async (suggestion: MedicalCodeSuggestion) => {
     await reviewCode(suggestion.suggestion_id, 'reject');
-    await fetchSuggestions(appointmentId);
-  }, [reviewCode, fetchSuggestions, appointmentId]);
+    await fetchSuggestions();
+  }, [reviewCode, fetchSuggestions]);
 
   const handleModify = useCallback((suggestion: MedicalCodeSuggestion) => {
     setEditingCode(suggestion);
@@ -56,15 +56,15 @@ export const MedicalCodingTab: React.FC<MedicalCodingTabProps> = ({ appointmentI
   const handleSaveModification = useCallback(async (suggestionId: string, newCode: string, newDescription: string) => {
     await reviewCode(suggestionId, 'modify', newCode, newDescription);
     setEditingCode(null);
-    await fetchSuggestions(appointmentId);
-  }, [reviewCode, fetchSuggestions, appointmentId]);
+    await fetchSuggestions();
+  }, [reviewCode, fetchSuggestions]);
 
   const handleBulkApprove = useCallback(async () => {
     if (selectedIds.length === 0) return;
     await bulkApprove(selectedIds);
     setSelectedIds([]);
-    await fetchSuggestions(appointmentId);
-  }, [selectedIds, bulkApprove, fetchSuggestions, appointmentId]);
+    await fetchSuggestions();
+  }, [selectedIds, bulkApprove, fetchSuggestions]);
 
   const pendingSuggestions = suggestions.filter(s => s.coding_status === 'Suggested');
 

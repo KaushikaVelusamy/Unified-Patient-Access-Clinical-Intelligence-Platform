@@ -9,7 +9,6 @@
 
 import React from 'react';
 import { useProviderAppointments } from '../../hooks/useProviders';
-import type { Provider } from '../../types/provider.types';
 
 interface AppointmentReassignmentModalProps {
   providerId: number;

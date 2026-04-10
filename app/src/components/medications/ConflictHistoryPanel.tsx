@@ -25,7 +25,7 @@ interface HistoryEntry {
 }
 
 export const ConflictHistoryPanel: React.FC<ConflictHistoryPanelProps> = ({ patientId }) => {
-  const { getActiveConflicts } = useConflictCheck();
+  const { getActiveConflicts, activeConflicts } = useConflictCheck(patientId);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,9 +34,9 @@ export const ConflictHistoryPanel: React.FC<ConflictHistoryPanelProps> = ({ pati
     const fetchHistory = async () => {
       setLoading(true);
       try {
-        const data = await getActiveConflicts(patientId);
+        await getActiveConflicts();
         if (!cancelled) {
-          setHistory(data as unknown as HistoryEntry[]);
+          setHistory(activeConflicts as unknown as HistoryEntry[]);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -44,7 +44,7 @@ export const ConflictHistoryPanel: React.FC<ConflictHistoryPanelProps> = ({ pati
     };
     fetchHistory();
     return () => { cancelled = true; };
-  }, [patientId, getActiveConflicts]);
+  }, [patientId, getActiveConflicts, activeConflicts]);
 
   if (loading) {
     return <div style={{ padding: '1rem', color: '#6B7280' }}>Loading conflict history...</div>;
